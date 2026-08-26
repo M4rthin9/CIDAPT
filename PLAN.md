@@ -31,19 +31,19 @@ every phase by reference.
 
 ## Phase status overview
 
-| Phase | Name                   | Status  |
-| ----- | ---------------------- | ------- |
-| P0 | Repo foundation | in-review |
-| P1    | Infra skeleton         | pending |
-| P2    | Data model             | pending |
-| P3    | Pure packages          | pending |
-| P4    | API core               | pending |
-| P5    | Orders & payments      | pending |
-| P6    | Tax & finance          | pending |
-| P7    | Worker & notifications | pending |
-| P8    | Storefront             | pending |
-| P9    | Admin SPA              | pending |
-| P10   | Ops hardening & launch | pending |
+| Phase | Name                   | Status    |
+| ----- | ---------------------- | --------- |
+| P0    | Repo foundation        | in-review |
+| P1    | Infra skeleton         | pending   |
+| P2    | Data model             | pending   |
+| P3    | Pure packages          | pending   |
+| P4    | API core               | pending   |
+| P5    | Orders & payments      | pending   |
+| P6    | Tax & finance          | pending   |
+| P7    | Worker & notifications | pending   |
+| P8    | Storefront             | pending   |
+| P9    | Admin SPA              | pending   |
+| P10   | Ops hardening & launch | pending   |
 
 ---
 
