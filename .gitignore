@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+build/
+.vite/
+.svelte-kit/
+*.tsbuildinfo
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# tests
+coverage/
+
+# misc
+.DS_Store
+Thumbs.db
+*.log
