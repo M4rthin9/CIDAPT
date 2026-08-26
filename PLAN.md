@@ -35,8 +35,8 @@ every phase by reference.
 | Phase | Name                   | Status    |
 | ----- | ---------------------- | --------- |
 | P0    | Repo foundation        | in-review |
-| P1    | Infra skeleton         | in-review |
-| P2    | Data model             | pending   |
+| P1    | Infra skeleton         | done      |
+| P2    | Data model             | in-review |
 | P3    | Pure packages          | pending   |
 | P4    | API core               | pending   |
 | P5    | Orders & payments      | pending   |
@@ -109,10 +109,10 @@ every phase by reference.
 
 **Acceptance criteria**
 
-- [ ] Migration applies cleanly in the one-shot container against real Postgres.
-- [ ] Testcontainers integration test: duplicate payment insert returns existing row (idempotency proven).
-- [ ] Schema audit: zero float/numeric money columns; zero timestamptz; ledger is sole stock path.
-- [ ] Seed script: catalog seed per AGENTS.md (divisions/categories/purchase modes).
+- [x] Migration applies cleanly in the one-shot container against real Postgres.
+- [x] Testcontainers integration test: duplicate payment insert returns existing row (idempotency proven).
+- [x] Schema audit: zero float/numeric money columns; zero timestamptz; ledger is sole stock path.
+- [x] Seed script: catalog seed per AGENTS.md (divisions/categories/purchase modes).
 
 **Gates:** `@schema-review` approval required before merge.
 

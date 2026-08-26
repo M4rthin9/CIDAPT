@@ -1,4 +1,47 @@
 services:
+  # One-shot migrations: must exit 0 before api ever starts (P4+ adds that
+  # dependency with condition: service_completed_successfully).
+  migrate:
+    image: node:22.22-alpine3.23
+    working_dir: /repo
+    command:
+      - sh
+      - -c
+      - corepack enable && corepack prepare pnpm@11.22.0 --activate && pnpm install --frozen-lockfile && pnpm --filter @cida/db migrate
+    environment:
+      TZ: UTC
+      CI: 'true'
+      # pnpm cannot hardlink across filesystems (bind vs volume), so pin the
+      # store inside the bind instead of a separate named volume.
+      npm_config_store_dir: /repo/.pnpm-store
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cida}
+    volumes:
+      - ..:/repo
+      - db_node_modules:/repo/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  seed:
+    profiles: ['tools']
+    image: node:22.22-alpine3.23
+    working_dir: /repo
+    command:
+      - sh
+      - -c
+      - corepack enable && corepack prepare pnpm@11.22.0 --activate && pnpm install --frozen-lockfile && pnpm --filter @cida/db seed
+    environment:
+      TZ: UTC
+      CI: 'true'
+      npm_config_store_dir: /repo/.pnpm-store
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cida}
+    volumes:
+      - ..:/repo
+      - db_node_modules:/repo/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   caddy:
     ports:
       - '${HTTP_PORT:-80}:80'
@@ -48,3 +91,4 @@ services:
 
 volumes:
   mailpit_data:
+  db_node_modules:

@@ -5,5 +5,28 @@
   "type": "module",
   "engines": {
     "node": "^22.0.0"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "scripts": {
+    "generate": "drizzle-kit generate",
+    "migrate": "drizzle-kit migrate",
+    "seed": "tsx src/seed.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@testcontainers/postgresql": "^12.1.0",
+    "@types/pg": "^8.23.0",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.23.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
   }
 }
