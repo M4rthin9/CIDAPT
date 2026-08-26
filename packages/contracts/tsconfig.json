@@ -1,0 +1,4 @@
+{
+  "extends": "@cida/config/tsconfig/base.json",
+  "include": ["src", "tests"]
+}

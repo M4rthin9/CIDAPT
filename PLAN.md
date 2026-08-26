@@ -36,8 +36,8 @@ every phase by reference.
 | ----- | ---------------------- | --------- |
 | P0    | Repo foundation        | in-review |
 | P1    | Infra skeleton         | done      |
-| P2    | Data model             | in-review |
-| P3    | Pure packages          | pending   |
+| P2    | Data model             | done      |
+| P3    | Pure packages          | in-review |
 | P4    | API core               | pending   |
 | P5    | Orders & payments      | pending   |
 | P6    | Tax & finance          | pending   |
@@ -130,10 +130,10 @@ every phase by reference.
 
 **Acceptance criteria**
 
-- [ ] Property-based tests (fast-check) pass on money rounding/allocation invariants (sum of allocations = total; no lost satang).
-- [ ] Property/vector tests pass on CRC16 and tag builders; bill-pay payload carries Ref1 = order_no.
-- [ ] Both packages have zero runtime deps beyond what's justified in the PR.
-- [ ] Contracts cover all P2 tables' write paths.
+- [x] Property-based tests (fast-check) pass on money rounding/allocation invariants (sum of allocations = total; no lost satang).
+- [x] Property/vector tests pass on CRC16 and tag builders; bill-pay payload carries Ref1 = order_no.
+- [x] Both packages have zero runtime deps beyond what's justified in the PR.
+- [x] Contracts cover all P2 tables' write paths.
 
 **Gates:** none formal.
 
