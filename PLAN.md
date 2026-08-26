@@ -37,7 +37,7 @@ every phase by reference.
 | P0    | Repo foundation        | in-review |
 | P1    | Infra skeleton         | done      |
 | P2    | Data model             | done      |
-| P3    | Pure packages          | in-review |
+| P3    | Pure packages          | done      |
 | P4    | API core               | pending   |
 | P5    | Orders & payments      | pending   |
 | P6    | Tax & finance          | pending   |
