@@ -1,0 +1,50 @@
+services:
+  caddy:
+    ports:
+      - '${HTTP_PORT:-80}:80'
+
+  gotenberg:
+    ports:
+      - '127.0.0.1:3010:3000'
+
+  minio:
+    ports:
+      - '127.0.0.1:9001:9001'
+
+  mailpit:
+    image: axllent/mailpit:v1.31.0
+    environment:
+      TZ: UTC
+      MP_DATA_FILE: /data/mailpit.db
+    volumes:
+      - mailpit_data:/data
+    ports:
+      - '127.0.0.1:8025:8025'
+      - '127.0.0.1:1025:1025'
+    healthcheck:
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 5s
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:8025/ || exit 1']
+
+  pgweb:
+    image: sosedoff/pgweb:0.17.0
+    command: ['pgweb', '--bind=0.0.0.0', '--listen=8081']
+    environment:
+      TZ: UTC
+      PGWEB_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cida}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:8081:8081'
+    healthcheck:
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+      test: ['CMD-SHELL', 'curl -fsS http://localhost:8081/ || exit 1']
+
+volumes:
+  mailpit_data:

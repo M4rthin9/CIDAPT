@@ -1,0 +1,17 @@
+{$SITE_URL} {
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+
+	handle_path /admin* {
+		root * /srv/admin
+		try_files {path} /index.html
+		file_server
+	}
+
+	handle {
+		reverse_proxy web:3001
+	}
+}

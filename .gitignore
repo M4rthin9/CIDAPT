@@ -13,6 +13,9 @@ build/
 .env.*
 !.env.example
 
+# local runtime scratch (dev bind targets, throwaway output)
+.local/
+
 # tests
 coverage/
 

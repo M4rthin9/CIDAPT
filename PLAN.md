@@ -19,13 +19,14 @@ every phase by reference.
 
 ## Decisions log
 
-| #   | Decision                                                           | Rationale                                                                                                                   |
-| --- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| D1  | pnpm workspaces for the monorepo                                   | Fast installs, workspace protocol. PowerShell execution policy blocks `pnpm.ps1`; invoke as `pnpm.cmd`.                     |
-| D2  | GitHub Actions CI on every PR                                      | Fits one-phase-one-PR; runs lint + typecheck + unit + Testcontainers integration.                                           |
-| D3  | Payments reconcile via abstract `ReconciliationProvider` interface | Real PSP/bank not yet chosen. Implement `FakeProvider` for tests; wire real credentials later without touching order logic. |
-| D4  | Node 22 LTS pinned everywhere (host has 22.23.2)                   | Matches AGENTS.md runtime; containers pin `node:22-alpine` with digest.                                                     |
-| D5  | Skills authored just-in-time per phase                             | Keeps planning light; each area's rules written when first needed.                                                          |
+| #   | Decision                                                                                                                       | Rationale                                                                                                                                                                                                                         |
+| --- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | pnpm workspaces for the monorepo                                                                                               | Fast installs, workspace protocol. PowerShell execution policy blocks `pnpm.ps1`; invoke as `pnpm.cmd`.                                                                                                                           |
+| D2  | GitHub Actions CI on every PR                                                                                                  | Fits one-phase-one-PR; runs lint + typecheck + unit + Testcontainers integration.                                                                                                                                                 |
+| D3  | Payments reconcile via abstract `ReconciliationProvider` interface                                                             | Real PSP/bank not yet chosen. Implement `FakeProvider` for tests; wire real credentials later without touching order logic.                                                                                                       |
+| D4  | Node 22 LTS pinned everywhere (host has 22.23.2)                                                                               | Matches AGENTS.md runtime; containers pin `node:22-alpine` with digest.                                                                                                                                                           |
+| D5  | Skills authored just-in-time per phase                                                                                         | Keeps planning light; each area's rules written when first needed.                                                                                                                                                                |
+| D6  | Dev overlay publishes loopback-only convenience ports (Gotenberg :3010, MinIO console :9001, Mailpit :8025/:1025, pgweb :8081) | Prod shape keeps them internal per AGENTS.md; loopback binding keeps dev testable without violating the edge rule. Site address is scheme-carrying `SITE_URL` so `http://localhost` stays plain HTTP while prod domains get ACME. |
 
 ---
 
@@ -34,7 +35,7 @@ every phase by reference.
 | Phase | Name                   | Status    |
 | ----- | ---------------------- | --------- |
 | P0    | Repo foundation        | in-review |
-| P1    | Infra skeleton         | pending   |
+| P1    | Infra skeleton         | in-review |
 | P2    | Data model             | pending   |
 | P3    | Pure packages          | pending   |
 | P4    | API core               | pending   |
@@ -87,10 +88,10 @@ every phase by reference.
 
 **Acceptance criteria**
 
-- [ ] `docker compose -f infra/compose.yml -f infra/compose.dev.yml up -d` → all services healthy.
-- [ ] In prod overlay shape, postgres/valkey/minio/gotenberg publish no ports.
-- [ ] Gotenberg renders a Thai test HTML → PDF with correct glyphs (no tofu).
-- [ ] Log rotation configured; JSON logs to stdout where applicable.
+- [x] `docker compose -f infra/compose.yml -f infra/compose.dev.yml up -d` → all services healthy.
+- [x] In prod overlay shape, postgres/valkey/minio/gotenberg publish no ports.
+- [x] Gotenberg renders a Thai test HTML → PDF with correct glyphs (no tofu).
+- [x] Log rotation configured; JSON logs to stdout where applicable.
 
 **Gates:** none formal; infra review in PR description.
 
