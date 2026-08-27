@@ -114,6 +114,20 @@ services:
       test: ['CMD-SHELL', 'pidof crond || exit 1']
     logging: *logging
 
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    environment:
+      TZ: UTC
+      NODE_ENV: production
+      API_URL: http://api:3000
+    healthcheck:
+      <<: *health_defaults
+      start_period: 10s
+      test: ['CMD-SHELL', 'node -e "process.exit(0)"']
+    logging: *logging
+
   worker:
     build:
       context: ..

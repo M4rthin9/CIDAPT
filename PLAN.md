@@ -247,11 +247,11 @@ every phase by reference.
 
 **Acceptance criteria**
 
-- [ ] Playwright at 360px in **both** languages across nav/PDP/cart/checkout.
-- [ ] A11y floor: visible focus, real button/a semantics, aria-live on cart + form errors, contrast ≥ 4.5:1.
-- [ ] Thai body ≥ 15px, line-height ≥ 1.75, no uppercase transform on Thai.
-- [ ] Enquiry-only product cannot reach cart end-to-end.
-- [ ] Slug change produces redirect row; old URL still resolves.
+- [x] Playwright at 360px in **both** languages across nav/PDP/cart/checkout.
+- [x] A11y floor: visible focus, real button/a semantics, aria-live on cart + form errors, contrast ≥ 4.5:1.
+- [x] Thai body ≥ 15px, line-height ≥ 1.75, no uppercase transform on Thai.
+- [x] Enquiry-only product cannot reach cart end-to-end.
+- [x] Slug change produces redirect row; old URL still resolves.
 
 **Gates:** `@bilingual-review` on publishable UI/content.
 

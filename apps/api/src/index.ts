@@ -14,6 +14,7 @@ import paymentsRoutes from './routes/payments';
 import enquiries from './routes/enquiries';
 import taxInvoicesRoutes from './routes/tax-invoices';
 import creditNotesRoutes from './routes/credit-notes';
+import redirectsRoutes from './routes/redirects';
 
 const env = loadEnv();
 createLogger(env);
@@ -50,6 +51,9 @@ app.route('/api/v1/tax-invoices', taxInvoicesRoutes);
 
 // Credit notes (admin+)
 app.route('/api/v1/credit-notes', creditNotesRoutes);
+
+// Redirects (slug changes — public lookup, admin create)
+app.route('/api/v1/redirects', redirectsRoutes);
 
 // Global error handler
 app.onError((err, c) => {
