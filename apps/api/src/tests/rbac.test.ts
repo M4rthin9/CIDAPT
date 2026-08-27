@@ -22,7 +22,7 @@ function jsonStatus(status: number, body: unknown) {
 }
 
 function withErrorHandler(app: Hono) {
-  app.onError((err: any) => {
+  app.onError((err: unknown) => {
     if (err instanceof AppError) {
       return jsonStatus(err.status, { error: { code: err.code } });
     }

@@ -11,7 +11,7 @@ function c_json(status: number, body: unknown) {
 }
 
 function withErrorHandler(app: Hono) {
-  app.onError((err: any) => {
+  app.onError((err: unknown) => {
     if (err instanceof AppError) {
       return c_json(err.status, {
         error: { code: err.code, message_th: err.messageTh, message_en: err.messageEn },
@@ -67,8 +67,8 @@ describe('P5 — Orders & payments logic', () => {
         }),
       });
       expect(res.status).toBe(400);
-      const body: any = await res.json();
-      expect(body.error.code).toBe('checkout_enquiry_not_allowed');
+      const body = (await res.json()) as { error?: { code?: string } };
+      expect(body.error?.code).toBe('checkout_enquiry_not_allowed');
     });
 
     it('allows all-cart products', async () => {
@@ -135,8 +135,8 @@ describe('P5 — Orders & payments logic', () => {
         }),
       });
       expect(res.status).toBe(200);
-      const body: any = await res.json();
-      expect(body.data.severity).toBe('red');
+      const body = (await res.json()) as { data?: { severity?: string } };
+      expect(body.data?.severity).toBe('red');
     });
   });
 
@@ -172,8 +172,8 @@ describe('P5 — Orders & payments logic', () => {
         body: JSON.stringify({ transRef: 'trans-001', rail: 'promptpay_billpay', amountSatang: 10000, occurredAt: Date.now() }),
       });
       expect(res.status).toBe(200);
-      const body: any = await res.json();
-      expect(body.data.status).toBe('verified');
+      const body = (await res.json()) as { data?: { status?: string } };
+      expect(body.data?.status).toBe('verified');
     });
 
     it('duplicate ingestion returns already_verified (idempotent)', async () => {
@@ -191,8 +191,8 @@ describe('P5 — Orders & payments logic', () => {
         body: JSON.stringify({ transRef: 'trans-002', rail: 'promptpay_billpay', amountSatang: 10000, occurredAt: Date.now() }),
       });
       expect(res.status).toBe(200);
-      const body: any = await res.json();
-      expect(body.data.status).toBe('already_verified');
+      const body = (await res.json()) as { data?: { status?: string } };
+      expect(body.data?.status).toBe('already_verified');
     });
   });
 

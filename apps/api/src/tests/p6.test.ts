@@ -11,7 +11,7 @@ function c_json(status: number, body: unknown) {
 }
 
 function withErrorHandler(app: Hono) {
-  app.onError((err: any) => {
+  app.onError((err: unknown) => {
     if (err instanceof AppError) {
       return c_json(err.status, {
         error: { code: err.code, message_th: err.messageTh, message_en: err.messageEn },
@@ -196,8 +196,8 @@ describe('P6 — Tax & finance logic', () => {
         }),
       });
       expect(res.status).toBe(400);
-      const body: any = await res.json();
-      expect(body.error.code).toBe('order_not_eligible');
+      const body = (await res.json()) as { error?: { code?: string } };
+      expect(body.error?.code).toBe('order_not_eligible');
     });
   });
 

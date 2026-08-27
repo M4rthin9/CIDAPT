@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { requestIdMiddleware } from './middleware/request-id';
 import { toErrorResponse, getErrorStatus } from './errors';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { getLogger, createLogger } from './logger';
 import { loadEnv } from './config';
 import health from './routes/health';
@@ -55,7 +56,7 @@ app.onError((err, c) => {
   const requestId = c.get('requestId');
   const status = getErrorStatus(err);
   const body = toErrorResponse(err, requestId);
-  return c.json(body, status as any);
+  return c.json(body, status as ContentfulStatusCode);
 });
 
 // 404

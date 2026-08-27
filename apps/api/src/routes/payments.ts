@@ -136,7 +136,7 @@ paymentsRoutes.post('/reconcile', async (c) => {
   const event = parsed.data;
   const now = Math.floor(Date.now() / 1000);
 
-  let existingPayment: any = null;
+  let existingPayment: { id: string; status: string; transRef: string | null; rail: string; orderId: string } | null = null;
 
   if (event.transRef) {
     const [row] = await db.instance
@@ -144,7 +144,7 @@ paymentsRoutes.post('/reconcile', async (c) => {
       .from(payments)
       .where(eq(payments.transRef, event.transRef))
       .limit(1);
-    existingPayment = row;
+    existingPayment = row ?? null;
   }
 
   if (!existingPayment && event.externalRef && event.rail) {
@@ -153,7 +153,7 @@ paymentsRoutes.post('/reconcile', async (c) => {
       .from(payments)
       .where(and(eq(payments.rail, event.rail), eq(payments.externalRef, event.externalRef)))
       .limit(1);
-    existingPayment = row;
+    existingPayment = row ?? null;
   }
 
   if (existingPayment && existingPayment.status === 'verified') {
@@ -232,9 +232,9 @@ paymentsRoutes.post('/reconcile', async (c) => {
     );
   }
 
-  let newPayment: any;
+  let newPayment: { id: string } | null = null;
   try {
-    [newPayment] = await db.instance
+    const [row] = await db.instance
       .insert(payments)
       .values({
         orderId,
@@ -251,9 +251,10 @@ paymentsRoutes.post('/reconcile', async (c) => {
         updatedAt: now,
       })
       .returning();
-  } catch (err: any) {
+    newPayment = row ?? null;
+  } catch (err: unknown) {
     // Concurrent duplicate — re-query existing row
-    if (err?.code === '23505') {
+    if (err instanceof Error && 'code' in err && (err as { code: string }).code === '23505') {
       const [existing] = await db.instance
         .select()
         .from(payments)
