@@ -34,7 +34,7 @@ every phase by reference.
 
 | Phase | Name                   | Status    |
 | ----- | ---------------------- | --------- |
-| P0    | Repo foundation        | in-review |
+| P0    | Repo foundation        | done      |
 | P1    | Infra skeleton         | done      |
 | P2    | Data model             | done      |
 | P3    | Pure packages          | done      |
@@ -64,7 +64,7 @@ every phase by reference.
 **Acceptance criteria**
 
 - [x] Fresh clone: `pnpm.cmd i && pnpm -r typecheck && pnpm -r lint && pnpm -r test` green.
-- [ ] CI green on first pushed PR (workflow committed; branch protection set when remote exists).
+- [x] CI green on first pushed PR (workflow committed; branch protection set when remote exists).
 - [x] No application code yet — scaffolding only.
 
 **Gates:** none (no migrations, payments, or publishable UI).
