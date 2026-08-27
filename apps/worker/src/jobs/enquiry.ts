@@ -4,6 +4,13 @@ import { connection } from '../queues';
 
 const log = pino({ name: 'worker:enquiry', level: process.env.LOG_LEVEL ?? 'info' });
 
+// Retry: 3 attempts, exponential backoff 2^n * 5s
+// Exported so the API imports this when calling queue.add()
+export const ENQUIRY_RETRY = {
+  attempts: 3,
+  backoff: { type: 'exponential' as const, delay: 5000 },
+};
+
 interface EnquiryJobData {
   enquiryId: string;
   productId: string;
@@ -19,7 +26,7 @@ const worker = new Worker<EnquiryJobData>(
     const { enquiryId, contactName, phone } = job.data;
     log.info({ jobId: job.id, enquiryId }, 'Enquiry notification started');
 
-    // TODO: implement real notification in P7+
+    // TODO: implement real notification
     log.info({ jobId: job.id, enquiryId, contactName, phone }, 'Enquiry notification sent (stub)');
 
     return { enquiryId, status: 'notified' };
@@ -35,7 +42,17 @@ worker.on('completed', (job) => {
 });
 
 worker.on('failed', (job, err) => {
-  log.error({ jobId: job?.id, error: err.message }, 'Enquiry notification failed');
+  if (job && job.attemptsMade >= (job.opts.attempts ?? 1)) {
+    log.error(
+      { jobId: job.id, error: err.message, attempts: job.attemptsMade },
+      'Enquiry notification DEAD-LETTERED — max retries exhausted',
+    );
+  } else {
+    log.warn(
+      { jobId: job?.id, error: err.message, attempt: job?.attemptsMade },
+      'Enquiry notification failed, will retry',
+    );
+  }
 });
 
 log.info('Enquiry worker registered');

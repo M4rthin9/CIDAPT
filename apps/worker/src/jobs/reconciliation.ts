@@ -4,6 +4,13 @@ import { connection, reconciliationQueue } from '../queues';
 
 const log = pino({ name: 'worker:reconciliation', level: process.env.LOG_LEVEL ?? 'info' });
 
+// Retry: 3 attempts, exponential backoff 2^n * 5s (5s, 10s, 20s)
+// Exported so the API imports this when calling queue.add()
+export const RECONCILIATION_RETRY = {
+  attempts: 3,
+  backoff: { type: 'exponential' as const, delay: 5000 },
+};
+
 interface ReconciliationJobData {
   provider: string;
   since?: number;
@@ -15,7 +22,7 @@ const worker = new Worker<ReconciliationJobData>(
     const { provider, since } = job.data;
     log.info({ jobId: job.id, provider, since }, 'Reconciliation poll started');
 
-    // TODO: implement real provider polling in P7+
+    // TODO: implement real provider polling
     log.info({ jobId: job.id }, 'Reconciliation poll completed (stub)');
     return { processed: 0 };
   },
@@ -34,16 +41,25 @@ worker.on('completed', (job) => {
 });
 
 worker.on('failed', (job, err) => {
-  log.error({ jobId: job?.id, error: err.message }, 'Reconciliation job failed');
+  if (job && job.attemptsMade >= (job.opts.attempts ?? 1)) {
+    log.error(
+      { jobId: job.id, error: err.message, attempts: job.attemptsMade },
+      'Reconciliation job DEAD-LETTERED — max retries exhausted',
+    );
+  } else {
+    log.warn(
+      { jobId: job?.id, error: err.message, attempt: job?.attemptsMade },
+      'Reconciliation job failed, will retry',
+    );
+  }
 });
 
 reconciliationQueue.add(
   'poll',
   { provider: 'fake' },
   {
-    repeat: {
-      every: 5 * 60 * 1000,
-    },
+    repeat: { every: 5 * 60 * 1000 },
+    ...RECONCILIATION_RETRY,
     removeOnComplete: 10,
     removeOnFail: 20,
   },

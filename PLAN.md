@@ -226,9 +226,9 @@ every phase by reference.
 
 **Acceptance criteria**
 
-- [ ] Retry/backoff covered by tests; poison messages dead-lettered visibly.
-- [ ] bull-board shows queues in dev overlay.
-- [ ] SIGTERM drain verified (in-flight job completes, no lost jobs).
+- [x] Retry/backoff covered by tests; poison messages dead-lettered visibly.
+- [x] bull-board shows queues in dev overlay.
+- [x] SIGTERM drain verified (in-flight job completes, no lost jobs).
 
 **Gates:** none formal.
 

@@ -71,6 +71,28 @@ services:
       start_period: 5s
       test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:8025/ || exit 1']
 
+  bull-board:
+    image: node:22.22-alpine3.23
+    working_dir: /repo/apps/worker
+    command:
+      - sh
+      - -c
+      - corepack enable && corepack prepare pnpm@11.22.0 --activate && pnpm install --frozen-lockfile && pnpm board
+    environment:
+      TZ: UTC
+      VALKEY_URL: redis://:changeme@valkey:6379
+      BOARD_PORT: '3001'
+    ports:
+      - '127.0.0.1:3001:3001'
+    depends_on:
+      valkey:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ..:/repo
+      - db_node_modules:/repo/node_modules
+
   pgweb:
     image: sosedoff/pgweb:0.17.0
     command: ['pgweb', '--bind=0.0.0.0', '--listen=8081']

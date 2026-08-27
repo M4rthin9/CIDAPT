@@ -94,6 +94,9 @@ importers:
       bullmq:
         specifier: ^5.34.10
         version: 5.81.3(supports-color@7.2.0)
+      hono:
+        specifier: ^4.13.4
+        version: 4.13.4
       ioredis:
         specifier: ^5.6.1
         version: 5.11.1(supports-color@7.2.0)
@@ -101,9 +104,18 @@ importers:
         specifier: ^9.6.0
         version: 9.14.0
     devDependencies:
+      '@bull-board/api':
+        specifier: ^9.4.0
+        version: 9.4.0(@bull-board/ui@9.4.0(bullmq@5.81.3(supports-color@7.2.0)))(bullmq@5.81.3(supports-color@7.2.0))
+      '@bull-board/hono':
+        specifier: ^9.4.0
+        version: 9.4.0(bullmq@5.81.3(supports-color@7.2.0))(hono@4.13.4)
       '@cida/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@hono/node-server':
+        specifier: ^2.1.1
+        version: 2.1.1(hono@4.13.4)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -286,6 +298,26 @@ packages:
 
   '@balena/dockerignore@1.0.2':
     resolution: {integrity: sha512-wMue2Sy4GAVTk6Ic4tJVcnfdau+gx2EnG7S+uAEe+TWJFqE4YoWN4/H8MSLj4eYJKxGg26lZwboEniNiNwZQ6Q==}
+
+  '@bull-board/api@9.4.0':
+    resolution: {integrity: sha512-poPku55iQd/VS65BUD8yn/uIHUruDwOVOiPEbThzjCd1nHAzEUEj/D+LWW1t9vzRsvN6xBr5jXlbJDapBnz7aw==}
+    peerDependencies:
+      '@bull-board/ui': 9.4.0
+      bull: ^4.16.5
+      bullmq: ^5.79.2 || ^6.0.0
+    peerDependenciesMeta:
+      bull:
+        optional: true
+      bullmq:
+        optional: true
+
+  '@bull-board/hono@9.4.0':
+    resolution: {integrity: sha512-Z65wT/S3BbzKB5e6DaYo2PSVOTXNRRIq4tFHHEqUH/rVbNhKvVgM12XhwBPqqyxND0d2bXp2Jt5u2sEVs/LjMA==}
+    peerDependencies:
+      hono: ^4
+
+  '@bull-board/ui@9.4.0':
+    resolution: {integrity: sha512-oRuCjMawEdpwFpHWWT6tzZLVqaqP+sK7xs1C1AhvTGm4pViNyPKwV7chtSExFOdVZuXJnJOl74WTXsHRfKMF3A==}
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
@@ -796,6 +828,12 @@ packages:
     resolution: {integrity: sha512-wtF6h+DY6M3YaDBPAmvuuA6jV8Sif9MjtOI5euKFWRgCDl5PeDpPsHR9u2l6St5ceY8AZgoNDww5+HvEsXFsGg==}
     engines: {node: '>=6'}
     hasBin: true
+
+  '@hono/node-server@2.1.1':
+    resolution: {integrity: sha512-ELuehkj5VCBdgEw9zs+ivkKwyzzUCSQuE96YmiPvn1ECBoZCczbFXJLeEGMTYjphP6gydh4pHMqEYPVMYUVgQg==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      hono: ^4
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -1722,6 +1760,11 @@ packages:
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
 
+  ejs@6.0.1:
+    resolution: {integrity: sha512-UaaM14yby8U3k02ihS1Bmj5Kz2d7CCQM1scxpgs4Mhkq8F1wR2gl3+Ts4h5Ne4Mnt7M9m4Dw7jsuMr3+xO4vZA==}
+    engines: {node: '>=0.12.18'}
+    hasBin: true
+
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
@@ -2278,6 +2321,9 @@ packages:
   redis-errors@1.2.0:
     resolution: {integrity: sha512-1qny3OExCf0UvUV/5wpYKf2YwPcOqXzkwKKSmKHiE6ZMQs5heeE/c8eXK+PNllPvmjgAbfnsbpkGZWy8cBpn9w==}
     engines: {node: '>=4'}
+
+  redis-info@3.1.0:
+    resolution: {integrity: sha512-ER4L9Sh/vm63DkIE0bkSjxluQlioBiBgf5w1UuldaW/3vPcecdljVDisZhmnCMvsxHNiARTTDDHGg9cGwTfrKg==}
 
   redis-parser@3.0.0:
     resolution: {integrity: sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==}
@@ -2837,6 +2883,30 @@ snapshots:
 
   '@balena/dockerignore@1.0.2': {}
 
+  '@bull-board/api@9.4.0(@bull-board/ui@9.4.0(bullmq@5.81.3(supports-color@7.2.0)))(bullmq@5.81.3(supports-color@7.2.0))':
+    dependencies:
+      '@bull-board/ui': 9.4.0(bullmq@5.81.3(supports-color@7.2.0))
+      redis-info: 3.1.0
+    optionalDependencies:
+      bullmq: 5.81.3(supports-color@7.2.0)
+
+  '@bull-board/hono@9.4.0(bullmq@5.81.3(supports-color@7.2.0))(hono@4.13.4)':
+    dependencies:
+      '@bull-board/api': 9.4.0(@bull-board/ui@9.4.0(bullmq@5.81.3(supports-color@7.2.0)))(bullmq@5.81.3(supports-color@7.2.0))
+      '@bull-board/ui': 9.4.0(bullmq@5.81.3(supports-color@7.2.0))
+      ejs: 6.0.1
+      hono: 4.13.4
+    transitivePeerDependencies:
+      - bull
+      - bullmq
+
+  '@bull-board/ui@9.4.0(bullmq@5.81.3(supports-color@7.2.0))':
+    dependencies:
+      '@bull-board/api': 9.4.0(@bull-board/ui@9.4.0(bullmq@5.81.3(supports-color@7.2.0)))(bullmq@5.81.3(supports-color@7.2.0))
+    transitivePeerDependencies:
+      - bull
+      - bullmq
+
   '@drizzle-team/brocli@0.10.2': {}
 
   '@emnapi/runtime@1.11.3':
@@ -3140,6 +3210,10 @@ snapshots:
       long: 5.3.2
       protobufjs: 7.6.5
       yargs: 17.7.3
+
+  '@hono/node-server@2.1.1(hono@4.13.4)':
+    dependencies:
+      hono: 4.13.4
 
   '@humanfs/core@0.19.2':
     dependencies:
@@ -3902,6 +3976,8 @@ snapshots:
 
   eastasianwidth@0.2.0: {}
 
+  ejs@6.0.1: {}
+
   emoji-regex@8.0.0: {}
 
   emoji-regex@9.2.2: {}
@@ -4530,6 +4606,10 @@ snapshots:
   real-require@0.2.0: {}
 
   redis-errors@1.2.0: {}
+
+  redis-info@3.1.0:
+    dependencies:
+      lodash: 4.18.1
 
   redis-parser@3.0.0:
     dependencies:

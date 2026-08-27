@@ -10,16 +10,21 @@
     "@cida/contracts": "workspace:*",
     "@cida/db": "workspace:*",
     "bullmq": "^5.34.10",
+    "hono": "^4.13.4",
     "ioredis": "^5.6.1",
     "pino": "^9.6.0"
   },
   "devDependencies": {
+    "@bull-board/api": "^9.4.0",
+    "@bull-board/hono": "^9.4.0",
     "@cida/config": "workspace:*",
+    "@hono/node-server": "^2.1.1",
     "typescript": "5.8.3",
     "vitest": "^3.2.7"
   },
   "scripts": {
     "dev": "tsx --watch src/index.ts",
+    "board": "tsx src/board.ts",
     "build": "tsc --outDir dist",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",

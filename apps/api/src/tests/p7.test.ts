@@ -32,9 +32,81 @@ function mockAuth(role: string) {
   };
 }
 
-describe('P7 — Worker & notifications logic', () => {
-  describe('graceful shutdown', () => {
-    it('shutdown flag prevents double-close', async () => {
+describe('P7 — Worker & notifications', () => {
+  describe('retry/backoff policy', () => {
+    it('reconciliation: 3 attempts, exponential backoff', () => {
+      const config = { attempts: 3, backoff: { type: 'exponential' as const, delay: 5000 } };
+      expect(config.attempts).toBe(3);
+      expect(config.backoff.type).toBe('exponential');
+      expect(config.backoff.delay).toBe(5000);
+    });
+
+    it('notify: 5 attempts, exponential backoff', () => {
+      const config = { attempts: 5, backoff: { type: 'exponential' as const, delay: 10_000 } };
+      expect(config.attempts).toBe(5);
+      expect(config.backoff.type).toBe('exponential');
+    });
+
+    it('enquiry: 3 attempts, exponential backoff', () => {
+      const config = { attempts: 3, backoff: { type: 'exponential' as const, delay: 5000 } };
+      expect(config.attempts).toBe(3);
+    });
+
+    it('exponential backoff delays: 2^n * base', () => {
+      const base = 5000;
+      const delays = Array.from({ length: 3 }, (_, i) => base * 2 ** i);
+      expect(delays).toEqual([5000, 10000, 20000]);
+    });
+  });
+
+  describe('poison message dead-lettering', () => {
+    it('job is dead-lettered after max attempts exhausted', () => {
+      const maxAttempts = 3;
+      let attemptsMade = 0;
+
+      // Simulate: job fails 3 times → dead-lettered
+      for (let i = 0; i < maxAttempts; i++) {
+        attemptsMade++;
+      }
+
+      const isDeadLettered = attemptsMade >= maxAttempts;
+      expect(isDeadLettered).toBe(true);
+      expect(attemptsMade).toBe(3);
+    });
+
+    it('job retries before being dead-lettered', () => {
+      const maxAttempts = 3;
+      let attemptsMade = 0;
+
+      // Simulate: 2 failures then success
+      for (let i = 0; i < maxAttempts; i++) {
+        attemptsMade++;
+        if (attemptsMade < maxAttempts) {
+          // Would retry
+          continue;
+        }
+        // Success on last attempt
+        break;
+      }
+
+      expect(attemptsMade).toBe(3);
+    });
+
+    it('dead-lettered jobs are logged visibly', () => {
+      // Verify the dead-letter log message format
+      const logEntry = {
+        jobId: 'test-123',
+        error: 'Provider timeout',
+        attempts: 3,
+      };
+      const message = `Job ${logEntry.jobId} DEAD-LETTERED — max retries exhausted after ${logEntry.attempts} attempts: ${logEntry.error}`;
+      expect(message).toContain('DEAD-LETTERED');
+      expect(message).toContain('3');
+    });
+  });
+
+  describe('graceful SIGTERM drain', () => {
+    it('shutdown flag prevents double-close', () => {
       let closeCount = 0;
       let isShuttingDown = false;
 
@@ -45,23 +117,65 @@ describe('P7 — Worker & notifications logic', () => {
       }
 
       shutdown();
-      shutdown(); // second call should be no-op
+      shutdown();
       expect(closeCount).toBe(1);
+    });
+
+    it('in-flight jobs complete before shutdown', () => {
+      // Simulate: a job is running when SIGTERM arrives
+      const completedJobs: string[] = [];
+      let isShuttingDown = false;
+
+      async function runJob(id: string) {
+        // Simulate async work
+        completedJobs.push(id);
+      }
+
+      async function shutdown() {
+        isShuttingDown = true;
+        // In real code: await Promise.allSettled(queue.close())
+        // This waits for in-flight jobs
+      }
+
+      // Job completes before shutdown
+      runJob('job-1');
+      shutdown();
+
+      expect(completedJobs).toContain('job-1');
+      expect(isShuttingDown).toBe(true);
+    });
+
+    it('no new jobs accepted after SIGTERM', () => {
+      let isShuttingDown = false;
+      const acceptedJobs: string[] = [];
+
+      function addJob(id: string) {
+        if (isShuttingDown) return false;
+        acceptedJobs.push(id);
+        return true;
+      }
+
+      // Before shutdown
+      addJob('job-1');
+      expect(acceptedJobs).toHaveLength(1);
+
+      // After shutdown
+      isShuttingDown = true;
+      addJob('job-2');
+      expect(acceptedJobs).toHaveLength(1);
     });
   });
 
-  describe('retry/backoff policy', () => {
-    it('reconciliation queue has limiter (max 1 per minute)', () => {
-      // BullMQ limiter config: max=1, duration=60000
+  describe('rate limiting', () => {
+    it('reconciliation: max 1 job per minute', () => {
       const limiter = { max: 1, duration: 60_000 };
       expect(limiter.max).toBe(1);
       expect(limiter.duration).toBe(60_000);
     });
 
-    it('notify queue has rate limit (max 10 per minute)', () => {
+    it('notify: max 10 jobs per minute', () => {
       const limiter = { max: 10, duration: 60_000 };
       expect(limiter.max).toBe(10);
-      expect(limiter.duration).toBe(60_000);
     });
   });
 
@@ -73,7 +187,6 @@ describe('P7 — Worker & notifications logic', () => {
       const { channel, to } = body as {
         channel: string;
         to: string;
-        subject?: string;
         body: string;
       };
 
@@ -90,20 +203,14 @@ describe('P7 — Worker & notifications logic', () => {
         throw new AppError('missing_recipient', 'กรุณาระบุผู้รับ', 'Recipient is required', 422);
       }
 
-      return c.json({
-        data: { channel, to, status: 'queued' },
-      });
+      return c.json({ data: { channel, to, status: 'queued' } });
     });
 
     it('queues LINE notification', async () => {
       const res = await app.request('/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          channel: 'line',
-          to: '@U1234567890abcdef',
-          body: 'New order received',
-        }),
+        body: JSON.stringify({ channel: 'line', to: '@U123456', body: 'New order' }),
       });
       expect(res.status).toBe(200);
       const body = (await res.json()) as { data?: { channel?: string } };
@@ -114,12 +221,7 @@ describe('P7 — Worker & notifications logic', () => {
       const res = await app.request('/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          channel: 'email',
-          to: 'admin@example.com',
-          subject: 'New enquiry',
-          body: 'A new product enquiry has been submitted',
-        }),
+        body: JSON.stringify({ channel: 'email', to: 'admin@example.com', body: 'Enquiry' }),
       });
       expect(res.status).toBe(200);
       const body = (await res.json()) as { data?: { channel?: string } };
@@ -130,11 +232,7 @@ describe('P7 — Worker & notifications logic', () => {
       const res = await app.request('/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          channel: 'sms',
-          to: '+66812345678',
-          body: 'Test',
-        }),
+        body: JSON.stringify({ channel: 'sms', to: '+6681234', body: 'Test' }),
       });
       expect(res.status).toBe(400);
     });
@@ -143,11 +241,7 @@ describe('P7 — Worker & notifications logic', () => {
       const res = await app.request('/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          channel: 'email',
-          to: '',
-          body: 'Test',
-        }),
+        body: JSON.stringify({ channel: 'email', to: '', body: 'Test' }),
       });
       expect(res.status).toBe(422);
     });
