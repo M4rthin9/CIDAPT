@@ -114,6 +114,30 @@ services:
       test: ['CMD-SHELL', 'pidof crond || exit 1']
     logging: *logging
 
+  worker:
+    build:
+      context: ..
+      dockerfile: apps/worker/Dockerfile
+    environment:
+      TZ: UTC
+      NODE_ENV: production
+      VALKEY_URL: redis://:${VALKEY_PASSWORD}@valkey:6379
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cida}
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: cida-craft
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    healthcheck:
+      <<: *health_defaults
+      start_period: 10s
+      test: ['CMD-SHELL', 'node -e "process.exit(0)"']
+    logging: *logging
+
 volumes:
   pg_data:
   valkey_data:

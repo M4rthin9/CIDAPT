@@ -5,5 +5,24 @@
   "type": "module",
   "engines": {
     "node": "^22.0.0"
+  },
+  "dependencies": {
+    "@cida/contracts": "workspace:*",
+    "@cida/db": "workspace:*",
+    "bullmq": "^5.34.10",
+    "ioredis": "^5.6.1",
+    "pino": "^9.6.0"
+  },
+  "devDependencies": {
+    "@cida/config": "workspace:*",
+    "typescript": "5.8.3",
+    "vitest": "^3.2.7"
+  },
+  "scripts": {
+    "dev": "tsx --watch src/index.ts",
+    "build": "tsc --outDir dist",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   }
 }
