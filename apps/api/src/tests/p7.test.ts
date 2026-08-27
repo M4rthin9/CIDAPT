@@ -11,7 +11,7 @@ function c_json(status: number, body: unknown) {
 }
 
 function withErrorHandler(app: Hono) {
-  app.onError((err: any) => {
+  app.onError((err: unknown) => {
     if (err instanceof AppError) {
       return c_json(err.status, {
         error: { code: err.code, message_th: err.messageTh, message_en: err.messageEn },
@@ -111,8 +111,8 @@ describe('P7 — Worker & notifications logic', () => {
         }),
       });
       expect(res.status).toBe(200);
-      const body: any = await res.json();
-      expect(body.data.channel).toBe('line');
+      const body = (await res.json()) as { data?: { channel?: string } };
+      expect(body.data?.channel).toBe('line');
     });
 
     it('queues email notification', async () => {
@@ -127,8 +127,8 @@ describe('P7 — Worker & notifications logic', () => {
         }),
       });
       expect(res.status).toBe(200);
-      const body: any = await res.json();
-      expect(body.data.channel).toBe('email');
+      const body = (await res.json()) as { data?: { channel?: string } };
+      expect(body.data?.channel).toBe('email');
     });
 
     it('rejects invalid channel', async () => {
