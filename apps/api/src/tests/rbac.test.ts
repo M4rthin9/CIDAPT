@@ -34,8 +34,12 @@ function withErrorHandler(app: Hono) {
 describe('RBAC middleware', () => {
   describe('requireRole', () => {
     const app = withErrorHandler(new Hono());
-    app.get('/superadmin', mockAuth('admin'), requireRole('superadmin'), (c) => c.json({ ok: true }));
-    app.get('/admin-or-super', mockAuth('admin'), requireRole('admin', 'superadmin'), (c) => c.json({ ok: true }));
+    app.get('/superadmin', mockAuth('admin'), requireRole('superadmin'), (c) =>
+      c.json({ ok: true }),
+    );
+    app.get('/admin-or-super', mockAuth('admin'), requireRole('admin', 'superadmin'), (c) =>
+      c.json({ ok: true }),
+    );
 
     it('rejects wrong role', async () => {
       const res = await app.request('/superadmin');
@@ -50,12 +54,25 @@ describe('RBAC middleware', () => {
 
   describe('requireMinRole', () => {
     const app = withErrorHandler(new Hono());
-    app.get('/officer', mockAuth('officer'), requireMinRole('officer'), (c) => c.json({ ok: true }));
+    app.get('/officer', mockAuth('officer'), requireMinRole('officer'), (c) =>
+      c.json({ ok: true }),
+    );
     app.get('/admin', mockAuth('officer'), requireMinRole('admin'), (c) => c.json({ ok: true }));
-    app.get('/superadmin', mockAuth('officer'), requireMinRole('superadmin'), (c) => c.json({ ok: true }));
-    app.get('/admin-as-admin', mockAuth('admin'), requireMinRole('admin'), (c) => c.json({ ok: true }));
-    app.get('/admin-as-superadmin', mockAuth('superadmin'), requireMinRole('admin'), (c) => c.json({ ok: true }));
-    app.get('/superadmin-as-superadmin', mockAuth('superadmin'), requireMinRole('superadmin'), (c) => c.json({ ok: true }));
+    app.get('/superadmin', mockAuth('officer'), requireMinRole('superadmin'), (c) =>
+      c.json({ ok: true }),
+    );
+    app.get('/admin-as-admin', mockAuth('admin'), requireMinRole('admin'), (c) =>
+      c.json({ ok: true }),
+    );
+    app.get('/admin-as-superadmin', mockAuth('superadmin'), requireMinRole('admin'), (c) =>
+      c.json({ ok: true }),
+    );
+    app.get(
+      '/superadmin-as-superadmin',
+      mockAuth('superadmin'),
+      requireMinRole('superadmin'),
+      (c) => c.json({ ok: true }),
+    );
 
     it('officer passes officer check', async () => {
       const res = await app.request('/officer');
@@ -101,9 +118,13 @@ describe('RBAC middleware', () => {
         it(`${route} with ${role} → ${expected}`, async () => {
           const app = withErrorHandler(new Hono());
           app.get('/public', (c) => c.json({ ok: true }));
-          app.get('/officer', mockAuth(role), requireMinRole('officer'), (c) => c.json({ ok: true }));
+          app.get('/officer', mockAuth(role), requireMinRole('officer'), (c) =>
+            c.json({ ok: true }),
+          );
           app.get('/admin', mockAuth(role), requireMinRole('admin'), (c) => c.json({ ok: true }));
-          app.get('/superadmin', mockAuth(role), requireMinRole('superadmin'), (c) => c.json({ ok: true }));
+          app.get('/superadmin', mockAuth(role), requireMinRole('superadmin'), (c) =>
+            c.json({ ok: true }),
+          );
 
           const res = await app.request(route);
           expect(res.status).toBe(expected);

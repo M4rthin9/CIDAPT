@@ -169,7 +169,12 @@ describe('P5 — Orders & payments logic', () => {
       const res = await app.request('/reconcile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transRef: 'trans-001', rail: 'promptpay_billpay', amountSatang: 10000, occurredAt: Date.now() }),
+        body: JSON.stringify({
+          transRef: 'trans-001',
+          rail: 'promptpay_billpay',
+          amountSatang: 10000,
+          occurredAt: Date.now(),
+        }),
       });
       expect(res.status).toBe(200);
       const body = (await res.json()) as { data?: { status?: string } };
@@ -181,14 +186,24 @@ describe('P5 — Orders & payments logic', () => {
       await app.request('/reconcile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transRef: 'trans-002', rail: 'promptpay_billpay', amountSatang: 10000, occurredAt: Date.now() }),
+        body: JSON.stringify({
+          transRef: 'trans-002',
+          rail: 'promptpay_billpay',
+          amountSatang: 10000,
+          occurredAt: Date.now(),
+        }),
       });
 
       // Duplicate
       const res = await app.request('/reconcile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transRef: 'trans-002', rail: 'promptpay_billpay', amountSatang: 10000, occurredAt: Date.now() }),
+        body: JSON.stringify({
+          transRef: 'trans-002',
+          rail: 'promptpay_billpay',
+          amountSatang: 10000,
+          occurredAt: Date.now(),
+        }),
       });
       expect(res.status).toBe(200);
       const body = (await res.json()) as { data?: { status?: string } };

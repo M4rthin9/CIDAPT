@@ -10,20 +10,20 @@ Handicraft produced by vocational workshops (กองงาน) — sold throug
 
 ## Stack
 
-| Layer | Tech |
-|---|---|
-| Runtime | Node 22 LTS (`node:22-alpine` in containers, `pnpm@11.22.0` workspaces) |
-| API | Hono on `@hono/node-server` · REST `/api/v1` · Zod via `@cida/contracts` |
-| DB | PostgreSQL 16 + Drizzle ORM + `drizzle-kit` forward-only migrations |
-| Storefront | SvelteKit 2 / Svelte 5 runes · SSR `adapter-node` |
-| Admin | Svelte 5 SPA (Vite) — static, served by Caddy |
-| Storage | MinIO (S3-compatible) behind `StorageDriver` · `sharp` width ladder |
-| Cache / Queue | Valkey 8 + BullMQ (`apps/worker`, no HTTP) |
-| PDF | Gotenberg custom image with **TH Sarabun New** + Anuphan |
-| Proxy / TLS | Caddy 2 (only service with host-published ports) |
-| Notify | LINE Messaging API · SMTP (Mailpit in dev) |
-| Types | TypeScript strict · Zod · `@cida/contracts` single source of truth |
-| Tests | Vitest · Testcontainers (real Postgres) · Playwright · `fast-check` |
+| Layer         | Tech                                                                     |
+| ------------- | ------------------------------------------------------------------------ |
+| Runtime       | Node 22 LTS (`node:22-alpine` in containers, `pnpm@11.22.0` workspaces)  |
+| API           | Hono on `@hono/node-server` · REST `/api/v1` · Zod via `@cida/contracts` |
+| DB            | PostgreSQL 16 + Drizzle ORM + `drizzle-kit` forward-only migrations      |
+| Storefront    | SvelteKit 2 / Svelte 5 runes · SSR `adapter-node`                        |
+| Admin         | Svelte 5 SPA (Vite) — static, served by Caddy                            |
+| Storage       | MinIO (S3-compatible) behind `StorageDriver` · `sharp` width ladder      |
+| Cache / Queue | Valkey 8 + BullMQ (`apps/worker`, no HTTP)                               |
+| PDF           | Gotenberg custom image with **TH Sarabun New** + Anuphan                 |
+| Proxy / TLS   | Caddy 2 (only service with host-published ports)                         |
+| Notify        | LINE Messaging API · SMTP (Mailpit in dev)                               |
+| Types         | TypeScript strict · Zod · `@cida/contracts` single source of truth       |
+| Tests         | Vitest · Testcontainers (real Postgres) · Playwright · `fast-check`      |
 
 ---
 
@@ -43,12 +43,12 @@ worker: BullMQ consumers (reconciliation, notify, backup hooks) — no HTTP port
 backup: crond pg_dump + MinIO mirror + restic offsite
 ```
 
-* `infra/compose.yml` — base used by dev **and** prod (pinned tags/digests, `TZ=UTC`, healthchecks, `json-file` rotation, named volumes only).
-* `infra/compose.dev.yml` — bind mounts, hot reload, Mailpit `:8025/:1025`, pgweb `:8081`, MinIO console `:9001` (loopback-only), Gotenberg `:3010`.
-* `infra/compose.prod.yml` — image tags, restart policies, resource limits.
-* `infra/Caddyfile` — `{$SITE_URL}` (scheme-carrying; `http://localhost` stays plain HTTP, prod domain gets ACME).
-* Migrations run as a **one-shot service** that must `exit 0` before `api` starts — never from app boot (replicas would race).
-* Every container `TZ=UTC`; Postgres `timezone=UTC`; render `Asia/Bangkok` at the edge only.
+- `infra/compose.yml` — base used by dev **and** prod (pinned tags/digests, `TZ=UTC`, healthchecks, `json-file` rotation, named volumes only).
+- `infra/compose.dev.yml` — bind mounts, hot reload, Mailpit `:8025/:1025`, pgweb `:8081`, MinIO console `:9001` (loopback-only), Gotenberg `:3010`.
+- `infra/compose.prod.yml` — image tags, restart policies, resource limits.
+- `infra/Caddyfile` — `{$SITE_URL}` (scheme-carrying; `http://localhost` stays plain HTTP, prod domain gets ACME).
+- Migrations run as a **one-shot service** that must `exit 0` before `api` starts — never from app boot (replicas would race).
+- Every container `TZ=UTC`; Postgres `timezone=UTC`; render `Asia/Bangkok` at the edge only.
 
 ## Repo layout
 
@@ -80,10 +80,10 @@ AGENTS.md     non-negotiables + domain rules
 
 ## Prerequisites
 
-* Docker Desktop (or Docker Engine) + Compose v2
-* Node 22 LTS (`22.23.x`) and `pnpm` 11.22.0 (`corepack prepare pnpm@11.22.0 --activate`)
-  * PowerShell on Windows blocks `pnpm.ps1` — invoke as `pnpm.cmd` (see `AGENTS.md` D1).
-* No other host dependencies — no `apt install` beyond Docker, no files outside named volumes.
+- Docker Desktop (or Docker Engine) + Compose v2
+- Node 22 LTS (`22.23.x`) and `pnpm` 11.22.0 (`corepack prepare pnpm@11.22.0 --activate`)
+  - PowerShell on Windows blocks `pnpm.ps1` — invoke as `pnpm.cmd` (see `AGENTS.md` D1).
+- No other host dependencies — no `apt install` beyond Docker, no files outside named volumes.
 
 ---
 
@@ -150,9 +150,9 @@ docker compose -f infra/compose.yml -f infra/compose.prod.yml ps
 docker compose -f infra/compose.yml -f infra/compose.prod.yml run --rm migrate
 ```
 
-* Multi-stage builds, `node:22-alpine` runtime, non-root uid, pinned digests (no `:latest`), `SIGTERM` drain, resource limits on every prod service.
-* Logs: JSON to stdout with rotation (`max-size: 10m`, `max-file: 5`).
-* See `PLAN.md` P10 and `infra/backup/` for the restore drill.
+- Multi-stage builds, `node:22-alpine` runtime, non-root uid, pinned digests (no `:latest`), `SIGTERM` drain, resource limits on every prod service.
+- Logs: JSON to stdout with rotation (`max-size: 10m`, `max-file: 5`).
+- See `PLAN.md` P10 and `infra/backup/` for the restore drill.
 
 ---
 
@@ -162,17 +162,17 @@ All config comes from environment variables, parsed **once at boot through a Zod
 
 Documented keys live in `.env.example` (no values committed). Selected keys:
 
-| Key | Purpose |
-|---|---|
-| `SITE_URL` | Caddy site address — `http://localhost` in dev (plain HTTP), `https://…` in prod (ACME) |
-| `HTTP_PORT` | Host port Caddy binds (default `80`) |
-| `DATABASE_URL` | `postgres://…@postgres:5432/…` (inside compose network) |
-| `VALKEY_URL` | `redis://:…@valkey:6379` |
-| `S3_ENDPOINT`, `S3_BUCKET` | MinIO endpoint + bucket (`cida-media`) |
-| `GOTENBERG_URL` | `http://gotenberg:3000` |
-| `SMTP_*`, `LINE_*` | Mail + LINE Messaging API (Mailpit in dev) |
-| `RECONCILIATION_PROVIDER`, `BILLER_COMP_CODE` | Payments — `fake` in dev/test |
-| `SESSION_SECRET`, `ADMIN_BOOTSTRAP_*` | Admin session + seed superadmin (rotate after first login) |
+| Key                                           | Purpose                                                                                 |
+| --------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `SITE_URL`                                    | Caddy site address — `http://localhost` in dev (plain HTTP), `https://…` in prod (ACME) |
+| `HTTP_PORT`                                   | Host port Caddy binds (default `80`)                                                    |
+| `DATABASE_URL`                                | `postgres://…@postgres:5432/…` (inside compose network)                                 |
+| `VALKEY_URL`                                  | `redis://:…@valkey:6379`                                                                |
+| `S3_ENDPOINT`, `S3_BUCKET`                    | MinIO endpoint + bucket (`cida-media`)                                                  |
+| `GOTENBERG_URL`                               | `http://gotenberg:3000`                                                                 |
+| `SMTP_*`, `LINE_*`                            | Mail + LINE Messaging API (Mailpit in dev)                                              |
+| `RECONCILIATION_PROVIDER`, `BILLER_COMP_CODE` | Payments — `fake` in dev/test                                                           |
+| `SESSION_SECRET`, `ADMIN_BOOTSTRAP_*`         | Admin session + seed superadmin (rotate after first login)                              |
 
 `.gitignore` excludes `.env` and `.env.*` (except `.env.example`). Never commit a real `.env`.
 
@@ -180,41 +180,41 @@ Documented keys live in `.env.example` (no values committed). Selected keys:
 
 ## Database & migrations
 
-* Drizzle ORM — schema in `packages/db`. Money columns `bigint` satang; timestamps `bigint` Unix seconds `*_at` (no `timestamptz`, no ISO strings, no `Date` in row types).
-* Forward-only migrations via `drizzle-kit` — never edit a migration that has run anywhere beyond a laptop.
-* `POSTGRES_INITDB_ARGS=--encoding=UTF8`, `TZ=UTC` everywhere.
-* Seed: divisions / categories per `AGENTS.md` (กองงาน ไฟเบอร์กลาส / เย็บปักถักร้อย / ดอกไม้ประดิษฐ์).
+- Drizzle ORM — schema in `packages/db`. Money columns `bigint` satang; timestamps `bigint` Unix seconds `*_at` (no `timestamptz`, no ISO strings, no `Date` in row types).
+- Forward-only migrations via `drizzle-kit` — never edit a migration that has run anywhere beyond a laptop.
+- `POSTGRES_INITDB_ARGS=--encoding=UTF8`, `TZ=UTC` everywhere.
+- Seed: divisions / categories per `AGENTS.md` (กองงาน ไฟเบอร์กลาส / เย็บปักถักร้อย / ดอกไม้ประดิษฐ์).
 
 ---
 
 ## Catalog domain
 
-| กองงาน | Code | Categories | Mode |
-|---|---|---|---|
-| ไฟเบอร์กลาส | `fiberglass` | fiberglass-products, wood-products, resin-products | `cart` |
-| เย็บปักถักร้อย | `needlework` | embroidered-shirts | `cart` |
-| ดอกไม้ประดิษฐ์ | `florals` | memorial-wreaths (พวงมาลา), funeral-wreaths (พวงหรีด) | `enquiry` |
+| กองงาน         | Code         | Categories                                            | Mode      |
+| -------------- | ------------ | ----------------------------------------------------- | --------- |
+| ไฟเบอร์กลาส    | `fiberglass` | fiberglass-products, wood-products, resin-products    | `cart`    |
+| เย็บปักถักร้อย | `needlework` | embroidered-shirts                                    | `cart`    |
+| ดอกไม้ประดิษฐ์ | `florals`    | memorial-wreaths (พวงมาลา), funeral-wreaths (พวงหรีด) | `enquiry` |
 
-* `cart` — add-to-cart → checkout → online payment.
-* `enquiry` — PDP shows **"ติดต่อเจ้าหน้าที่เพื่อสั่งซื้อ"** with form (ribbon text, delivery date/time, venue, contact) + phone/LINE; cart API **rejects** enquiry products server-side. Floral PDPs: plain respectful tone, no exclamation / promo badges / parallax / confetti / motion.
+- `cart` — add-to-cart → checkout → online payment.
+- `enquiry` — PDP shows **"ติดต่อเจ้าหน้าที่เพื่อสั่งซื้อ"** with form (ribbon text, delivery date/time, venue, contact) + phone/LINE; cart API **rejects** enquiry products server-side. Floral PDPs: plain respectful tone, no exclamation / promo badges / parallax / confetti / motion.
 
 ## Payments — three rails
 
-| Rail | Code | EMVCo | Reconciled by | Pref |
-|---|---|---|---|---|
-| PromptPay Bill Payment | `promptpay_billpay` | tag 30 | `Ref1 = order_no (CIDA-YYMM-NNNNN)` on statement | Primary |
-| PromptPay eWallet | `promptpay_ewallet` | tag 29 | `trans_ref` provider lookup | Secondary |
-| Bank transfer | `bank_transfer` | — | `trans_ref` lookup else manual (superadmin + typed reason, red audit) | Fallback |
+| Rail                   | Code                | EMVCo  | Reconciled by                                                         | Pref      |
+| ---------------------- | ------------------- | ------ | --------------------------------------------------------------------- | --------- |
+| PromptPay Bill Payment | `promptpay_billpay` | tag 30 | `Ref1 = order_no (CIDA-YYMM-NNNNN)` on statement                      | Primary   |
+| PromptPay eWallet      | `promptpay_ewallet` | tag 29 | `trans_ref` provider lookup                                           | Secondary |
+| Bank transfer          | `bank_transfer`     | —      | `trans_ref` lookup else manual (superadmin + typed reason, red audit) | Fallback  |
 
 One `payments` table + one state machine. Adding a rail must not touch order logic. Idempotent ingestion: `UNIQUE(trans_ref)` (nullable — many `NULL` pending rows intentionally coexist) + `UNIQUE(rail, external_ref)` + `CHECK(status <> 'verified' OR trans_ref IS NOT NULL)`. **A slip/mini-QR never settles an order** — settlement only via provider lookup (`trans_ref`) or matched statement line (`Ref1`).
 
 ## Roles (server-enforced on every route)
 
-| Role | Thai | Capabilities |
-|---|---|---|
-| `superadmin` | ผู้ดูแลระบบสูงสุด | everything incl. settings, admin users, manual payment override, credit notes, audit log, export |
-| `admin` | ผู้ดูแลระบบ | catalog, content, orders, shipping, coupons, reports, enquiries, verify payments — **not** settings/users/manual override |
-| `officer` | เจ้าหน้าที่ | orders, inventory, enquiries, packing/shipping, contact messages — read-only catalog/reports |
+| Role         | Thai              | Capabilities                                                                                                              |
+| ------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `superadmin` | ผู้ดูแลระบบสูงสุด | everything incl. settings, admin users, manual payment override, credit notes, audit log, export                          |
+| `admin`      | ผู้ดูแลระบบ       | catalog, content, orders, shipping, coupons, reports, enquiries, verify payments — **not** settings/users/manual override |
+| `officer`    | เจ้าหน้าที่       | orders, inventory, enquiries, packing/shipping, contact messages — read-only catalog/reports                              |
 
 UI hiding is not access control.
 
@@ -268,11 +268,11 @@ Every bug fix ships with a regression test in the same commit.
 
 ## Security notes
 
-* Never commit `.env` — `.env.example` documents keys only.
-* `.gitignore` covers `.env`, `node_modules`, `dist/build/.svelte-kit`, coverage, `.DS_Store`.
-* `POSTGRES_PASSWORD`, `VALKEY_PASSWORD`, `MINIO_ROOT_PASSWORD`, `SESSION_SECRET`, `LINE_CHANNEL_*`, `SMTP_*`, `BILLER_COMP_CODE` are injected via `.env` and validated at boot — no defaults, no fallbacks, no values in the repo.
-* Report credential leaks immediately and rotate the affected secret.
+- Never commit `.env` — `.env.example` documents keys only.
+- `.gitignore` covers `.env`, `node_modules`, `dist/build/.svelte-kit`, coverage, `.DS_Store`.
+- `POSTGRES_PASSWORD`, `VALKEY_PASSWORD`, `MINIO_ROOT_PASSWORD`, `SESSION_SECRET`, `LINE_CHANNEL_*`, `SMTP_*`, `BILLER_COMP_CODE` are injected via `.env` and validated at boot — no defaults, no fallbacks, no values in the repo.
+- Report credential leaks immediately and rotate the affected secret.
 
 ---
 
-*Generated for CIDA Craft. For operator documentation (go-live checklist, restore drill) see `PLAN.md` P10 and `infra/backup/`.*
+_Generated for CIDA Craft. For operator documentation (go-live checklist, restore drill) see `PLAN.md` P10 and `infra/backup/`._

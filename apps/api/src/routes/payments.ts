@@ -6,7 +6,11 @@ import { authMiddleware } from '../middleware/auth';
 import { requireMinRole } from '../middleware/rbac';
 import { writeAuditLog } from '../middleware/audit';
 import { AppError } from '../errors';
-import { paymentInitiateSchema, reconciliationEventSchema, manualVerifySchema } from '@cida/contracts';
+import {
+  paymentInitiateSchema,
+  reconciliationEventSchema,
+  manualVerifySchema,
+} from '@cida/contracts';
 import { buildBillPaymentQr, buildTransferProxyQr } from '@cida/promptpay';
 import { getEnv } from '../config';
 import type { ReconciliationProvider } from '../lib/reconciliation';
@@ -47,11 +51,7 @@ paymentsRoutes.post('/initiate', async (c) => {
 
   const { orderId, rail, amountSatang } = parsed.data;
 
-  const [order] = await db.instance
-    .select()
-    .from(orders)
-    .where(eq(orders.id, orderId))
-    .limit(1);
+  const [order] = await db.instance.select().from(orders).where(eq(orders.id, orderId)).limit(1);
 
   if (!order) {
     throw new AppError('order_not_found', 'ไม่พบคำสั่งซื้อ', 'Order not found', 404);
@@ -82,7 +82,12 @@ paymentsRoutes.post('/initiate', async (c) => {
     .returning();
 
   if (!payment) {
-    throw new AppError('payment_failed', 'สร้างรายการชำระไม่สำเร็จ', 'Failed to create payment', 500);
+    throw new AppError(
+      'payment_failed',
+      'สร้างรายการชำระไม่สำเร็จ',
+      'Failed to create payment',
+      500,
+    );
   }
 
   let qrPayload: string | undefined;
@@ -136,7 +141,13 @@ paymentsRoutes.post('/reconcile', async (c) => {
   const event = parsed.data;
   const now = Math.floor(Date.now() / 1000);
 
-  let existingPayment: { id: string; status: string; transRef: string | null; rail: string; orderId: string } | null = null;
+  let existingPayment: {
+    id: string;
+    status: string;
+    transRef: string | null;
+    rail: string;
+    orderId: string;
+  } | null = null;
 
   if (event.transRef) {
     const [row] = await db.instance

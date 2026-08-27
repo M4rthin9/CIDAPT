@@ -84,7 +84,12 @@ creditNotesRoutes.post('/', async (c) => {
     .returning();
 
   if (!creditNote) {
-    throw new AppError('credit_note_failed', 'ออกใบลดหนี้ไม่สำเร็จ', 'Failed to issue credit note', 500);
+    throw new AppError(
+      'credit_note_failed',
+      'ออกใบลดหนี้ไม่สำเร็จ',
+      'Failed to issue credit note',
+      500,
+    );
   }
 
   // Void the original invoice (it's now corrected by the credit note)

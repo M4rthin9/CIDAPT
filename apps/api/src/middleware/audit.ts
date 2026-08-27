@@ -11,16 +11,11 @@ export interface AuditEntry {
   severity?: 'normal' | 'red';
 }
 
-export async function writeAuditLog(
-  c: Context,
-  entry: AuditEntry,
-): Promise<void> {
+export async function writeAuditLog(c: Context, entry: AuditEntry): Promise<void> {
   const adminUserId = c.get('adminUserId') as string | undefined;
   const requestId = c.get('requestId') as string | undefined;
   const ip =
-    c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ??
-    c.req.header('x-real-ip') ??
-    null;
+    c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? c.req.header('x-real-ip') ?? null;
 
   await db.instance.insert(auditLog).values({
     actorAdminId: adminUserId ?? null,

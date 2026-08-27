@@ -20,10 +20,7 @@ const worker = new Worker<EnquiryJobData>(
     log.info({ jobId: job.id, enquiryId }, 'Enquiry notification started');
 
     // TODO: implement real notification in P7+
-    log.info(
-      { jobId: job.id, enquiryId, contactName, phone },
-      'Enquiry notification sent (stub)',
-    );
+    log.info({ jobId: job.id, enquiryId, contactName, phone }, 'Enquiry notification sent (stub)');
 
     return { enquiryId, status: 'notified' };
   },

@@ -103,7 +103,13 @@ checkout.post('/', async (c) => {
       })
       .returning();
 
-    if (!o) throw new AppError('checkout_failed', 'สร้างคำสั่งซื้อไม่สำเร็จ', 'Failed to create order', 500);
+    if (!o)
+      throw new AppError(
+        'checkout_failed',
+        'สร้างคำสั่งซื้อไม่สำเร็จ',
+        'Failed to create order',
+        500,
+      );
 
     await tx.insert(orderItems).values(
       orderItemsData.map((item) => ({
@@ -116,7 +122,12 @@ checkout.post('/', async (c) => {
   });
 
   if (!order) {
-    throw new AppError('checkout_failed', 'สร้างคำสั่งซื้อไม่สำเร็จ', 'Failed to create order', 500);
+    throw new AppError(
+      'checkout_failed',
+      'สร้างคำสั่งซื้อไม่สำเร็จ',
+      'Failed to create order',
+      500,
+    );
   }
 
   await writeAuditLog(c, {

@@ -21,30 +21,15 @@ upload.post('/', async (c) => {
   const file = formData.get('file');
 
   if (!file || !(file instanceof File)) {
-    throw new AppError(
-      'upload_no_file',
-      'กรุณาเลือกไฟล์',
-      'No file provided',
-      400,
-    );
+    throw new AppError('upload_no_file', 'กรุณาเลือกไฟล์', 'No file provided', 400);
   }
 
   if (!ACCEPTED_TYPES.includes(file.type)) {
-    throw new AppError(
-      'upload_invalid_type',
-      'ประเภทไฟล์ไม่รองรับ',
-      'Unsupported file type',
-      400,
-    );
+    throw new AppError('upload_invalid_type', 'ประเภทไฟล์ไม่รองรับ', 'Unsupported file type', 400);
   }
 
   if (file.size > MAX_SIZE) {
-    throw new AppError(
-      'upload_too_large',
-      'ไฟล์มีขนาดใหญ่เกินไป',
-      'File too large',
-      400,
-    );
+    throw new AppError('upload_too_large', 'ไฟล์มีขนาดใหญ่เกินไป', 'File too large', 400);
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());

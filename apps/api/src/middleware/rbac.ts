@@ -11,12 +11,7 @@ export function requireRole(...roles: string[]) {
   return async (c: Context, next: Next) => {
     const role = c.get('adminRole') as string | undefined;
     if (!role || !roles.includes(role)) {
-      throw new AppError(
-        'forbidden',
-        'ไม่มีสิทธิ์เข้าถึง',
-        'Insufficient permissions',
-        403,
-      );
+      throw new AppError('forbidden', 'ไม่มีสิทธิ์เข้าถึง', 'Insufficient permissions', 403);
     }
     await next();
   };
@@ -29,12 +24,7 @@ export function requireMinRole(minRole: string) {
     const minLevel = ROLE_HIERARCHY[minRole] ?? 999;
 
     if (roleLevel < minLevel) {
-      throw new AppError(
-        'forbidden',
-        'ไม่มีสิทธิ์เข้าถึง',
-        'Insufficient permissions',
-        403,
-      );
+      throw new AppError('forbidden', 'ไม่มีสิทธิ์เข้าถึง', 'Insufficient permissions', 403);
     }
     await next();
   };

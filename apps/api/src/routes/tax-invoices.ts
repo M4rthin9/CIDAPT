@@ -34,18 +34,19 @@ taxInvoicesRoutes.post('/', async (c) => {
   const now = parsed.data.issuedAt ?? Math.floor(Date.now() / 1000);
 
   // Fetch order
-  const [order] = await db.instance
-    .select()
-    .from(orders)
-    .where(eq(orders.id, orderId))
-    .limit(1);
+  const [order] = await db.instance.select().from(orders).where(eq(orders.id, orderId)).limit(1);
 
   if (!order) {
     throw new AppError('order_not_found', 'ไม่พบคำสั่งซื้อ', 'Order not found', 404);
   }
 
   // Check order is paid
-  if (order.status !== 'paid' && order.status !== 'processing' && order.status !== 'shipped' && order.status !== 'completed') {
+  if (
+    order.status !== 'paid' &&
+    order.status !== 'processing' &&
+    order.status !== 'shipped' &&
+    order.status !== 'completed'
+  ) {
     throw new AppError(
       'order_not_eligible',
       'คำสั่งซื้อยังไม่ชำระเงิน',
@@ -71,17 +72,14 @@ taxInvoicesRoutes.post('/', async (c) => {
   }
 
   // Fetch order items for PDF
-  const items = await db.instance
-    .select()
-    .from(orderItems)
-    .where(eq(orderItems.orderId, orderId));
+  const items = await db.instance.select().from(orderItems).where(eq(orderItems.orderId, orderId));
 
   // Generate gapless invoice number
   const invoiceNo = await nextDocumentNo('tax_invoice');
 
   // Calculate VAT (VAT-inclusive pricing — VAT is derived)
   const totalSatang = order.totalSatang;
-  const vatSatang = Math.round(totalSatang * 7 / 107);
+  const vatSatang = Math.round((totalSatang * 7) / 107);
   const subtotalSatang = totalSatang - vatSatang;
 
   // Generate PDF
@@ -142,7 +140,12 @@ taxInvoicesRoutes.post('/', async (c) => {
     .returning();
 
   if (!invoice) {
-    throw new AppError('invoice_failed', 'ออกใบกำกับภาษีไม่สำเร็จ', 'Failed to issue tax invoice', 500);
+    throw new AppError(
+      'invoice_failed',
+      'ออกใบกำกับภาษีไม่สำเร็จ',
+      'Failed to issue tax invoice',
+      500,
+    );
   }
 
   await writeAuditLog(c, {

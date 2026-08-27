@@ -9,25 +9,21 @@ const weightsArb = fc
   .map((w) => w);
 
 describe('allocation invariants', () => {
-  it(
-    'parts always sum to the total and stay within one satang of the ideal share',
-    () => {
-      fc.assert(
-        fc.property(satangArb, weightsArb, (total, weights) => {
-          const parts = allocateSatang(total, weights);
-          expect(parts.reduce((a, b) => a + b, 0)).toBe(total);
-          const sumW = weights.reduce((a, b) => a + b, 0);
-          for (let i = 0; i < parts.length; i++) {
-            const ideal = (total * weights[i]!) / sumW;
-            expect(parts[i]!).toBeGreaterThanOrEqual(Math.floor(ideal));
-            expect(parts[i]!).toBeLessThanOrEqual(Math.ceil(ideal));
-          }
-        }),
-        { numRuns: 500 },
-      );
-    },
-    10_000,
-  );
+  it('parts always sum to the total and stay within one satang of the ideal share', () => {
+    fc.assert(
+      fc.property(satangArb, weightsArb, (total, weights) => {
+        const parts = allocateSatang(total, weights);
+        expect(parts.reduce((a, b) => a + b, 0)).toBe(total);
+        const sumW = weights.reduce((a, b) => a + b, 0);
+        for (let i = 0; i < parts.length; i++) {
+          const ideal = (total * weights[i]!) / sumW;
+          expect(parts[i]!).toBeGreaterThanOrEqual(Math.floor(ideal));
+          expect(parts[i]!).toBeLessThanOrEqual(Math.ceil(ideal));
+        }
+      }),
+      { numRuns: 500 },
+    );
+  }, 10_000);
 });
 
 describe('VAT invariants', () => {

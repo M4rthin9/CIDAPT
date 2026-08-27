@@ -87,12 +87,7 @@ describe('P7 — Worker & notifications logic', () => {
       }
 
       if (!to || to.trim().length === 0) {
-        throw new AppError(
-          'missing_recipient',
-          'กรุณาระบุผู้รับ',
-          'Recipient is required',
-          422,
-        );
+        throw new AppError('missing_recipient', 'กรุณาระบุผู้รับ', 'Recipient is required', 422);
       }
 
       return c.json({

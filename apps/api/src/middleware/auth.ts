@@ -60,12 +60,7 @@ export async function authMiddleware(c: Context, next: Next) {
   const token = getCookie(c, COOKIE_NAME);
 
   if (!token) {
-    throw new AppError(
-      'auth_required',
-      'กรุณาเข้าสู่ระบบ',
-      'Authentication required',
-      401,
-    );
+    throw new AppError('auth_required', 'กรุณาเข้าสู่ระบบ', 'Authentication required', 401);
   }
 
   const tokenHash = hashToken(token);
@@ -96,12 +91,7 @@ export async function authMiddleware(c: Context, next: Next) {
       path: '/',
       domain: env.COOKIE_DOMAIN,
     });
-    throw new AppError(
-      'session_expired',
-      'เซสชันหมดอายุ',
-      'Session expired',
-      401,
-    );
+    throw new AppError('session_expired', 'เซสชันหมดอายุ', 'Session expired', 401);
   }
 
   c.set('adminUserId', session.adminUserId);

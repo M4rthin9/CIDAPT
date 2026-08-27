@@ -38,9 +38,7 @@ export function toErrorResponse(err: unknown, requestId?: string) {
         code: 'validation_error',
         message_th: 'ข้อมูลไม่ถูกต้อง',
         message_en: 'Validation error',
-        details: Object.fromEntries(
-          err.issues.map((i) => [i.path.join('.'), i.message]),
-        ),
+        details: Object.fromEntries(err.issues.map((i) => [i.path.join('.'), i.message])),
         request_id: requestId,
       },
     };

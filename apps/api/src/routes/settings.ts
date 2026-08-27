@@ -28,12 +28,7 @@ settings.get('/:key', async (c) => {
     .limit(1);
 
   if (!row) {
-    throw new AppError(
-      'settings_not_found',
-      'ไม่พบตั้งค่า',
-      'Setting not found',
-      404,
-    );
+    throw new AppError('settings_not_found', 'ไม่พบตั้งค่า', 'Setting not found', 404);
   }
 
   return c.json({ data: row });
@@ -113,12 +108,7 @@ settings.delete('/:key', async (c) => {
     .limit(1);
 
   if (!existing) {
-    throw new AppError(
-      'settings_not_found',
-      'ไม่พบตั้งค่า',
-      'Setting not found',
-      404,
-    );
+    throw new AppError('settings_not_found', 'ไม่พบตั้งค่า', 'Setting not found', 404);
   }
 
   await writeAuditLog(c, {

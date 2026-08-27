@@ -4,7 +4,14 @@ import { eq } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
 import { db } from '../db';
 import { adminUsers } from '@cida/db/schema';
-import { authMiddleware, verifyPassword, createSession, setSessionCookie, clearSessionCookie, destroySession } from '../middleware/auth';
+import {
+  authMiddleware,
+  verifyPassword,
+  createSession,
+  setSessionCookie,
+  clearSessionCookie,
+  destroySession,
+} from '../middleware/auth';
 import { writeAuditLog } from '../middleware/audit';
 import { AppError } from '../errors';
 
