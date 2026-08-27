@@ -245,7 +245,8 @@ every phase by reference.
 - Cart + checkout UI over P5 APIs; florals enquiry flow ("ติดต่อเจ้าหน้าที่เพื่อสั่งซื้อ") — plain respectful tone on funeral products: no exclamation marks, no promo badges/motion/parallax/confetti.
 - Per-language slugs with `redirects` rows on change; LCP image preloaded; design tokens per AGENTS.md palette/type; motion budget respected incl. `prefers-reduced-motion`.
 
-**Acceptance criteria**
+**Acceptance criteria** — all verified by `apps/web/e2e/storefront.spec.ts` (42 tests,
+green against a live API + seeded catalogue):
 
 - [x] Playwright at 360px in **both** languages across nav/PDP/cart/checkout.
 - [x] A11y floor: visible focus, real button/a semantics, aria-live on cart + form errors, contrast ≥ 4.5:1.
@@ -253,7 +254,26 @@ every phase by reference.
 - [x] Enquiry-only product cannot reach cart end-to-end.
 - [x] Slug change produces redirect row; old URL still resolves.
 
-**Gates:** `@bilingual-review` on publishable UI/content.
+**Delivered alongside P8** (the storefront could not meet its criteria without these):
+
+- `GET /api/v1/catalog/*` — divisions, categories, products, product-by-slug (either language).
+- `/api/v1/cart` — signed-cookie guest cart; rejects `enquiry` products server-side (closes the
+  P5 criterion that until now was only covered by a mocked unit test).
+- `products.slug_th` / `slug_en` + migration `0001` — the storefront routes products by slug.
+- `@hono/node-server` bootstrap with SIGTERM drain — the API previously exported a fetch handler
+  and never listened.
+- Seeded sample catalogue including one enquiry-only floral, so the e2e run has real rows.
+
+**Known gaps (not P8 scope):**
+
+- `infra/compose.yml` has no `api` service and `apps/api` has no Dockerfile, although the Caddyfile
+  proxies `/api/*` to `api:3000`. Deploying the storefront needs this closed — P10.
+- `packages/db/tests/payments-idempotency.test.ts` fails on `main` (the
+  `payments_verified_has_trans_ref` check does not reject a bare `status = 'verified'` update).
+  Pre-existing, P5 territory.
+
+**Gates:** `@bilingual-review` on publishable UI/content; `@schema-review` on migration `0001`
+— **not yet run**.
 
 ---
 

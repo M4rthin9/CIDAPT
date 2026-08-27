@@ -12,7 +12,7 @@
 
 <section class="category-hero">
   <div class="container">
-    <nav class="breadcrumb" aria-label="Breadcrumb">
+    <nav class="breadcrumb" aria-label={data.lang === 'th' ? 'เส้นทาง' : 'Breadcrumb'}>
       <a href="/{data.lang}">{data.lang === 'th' ? 'หน้าแรก' : 'Home'}</a>
       <span class="breadcrumb-sep">/</span>
       <a href="/{data.lang}/{data.division}"
@@ -34,7 +34,9 @@
       <div class="product-grid">
         {#each data.products as product, i}
           <a
-            href="/{data.lang}/{data.division}/{data.categorySlug}/{product.slug}"
+            href="/{data.lang}/{data.division}/{data.categorySlug}/{data.lang === 'th'
+              ? product.slug_th
+              : product.slug_en}"
             class="product-card reveal reveal-delay-{(i % 3) + 1}"
           >
             <div class="product-img"></div>

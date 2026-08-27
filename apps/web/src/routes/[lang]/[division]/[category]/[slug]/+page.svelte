@@ -11,6 +11,10 @@
   let quantity = $state(1);
   let cartMessage = $state('');
 
+  const divisionName = $derived(data.divisionName);
+  const material = $derived(lang === 'th' ? product?.material_th : product?.material_en);
+  const handFinish = $derived(lang === 'th' ? product?.handFinish_th : product?.handFinish_en);
+
   // Enquiry form state
   let enquiryName = $state('');
   let enquiryPhone = $state('');
@@ -19,6 +23,8 @@
   let enquiryDate = $state('');
   let enquiryMessage = $state('');
   let enquirySubmitted = $state(false);
+  let enquiryError = $state('');
+  let enquirySending = $state(false);
 
   async function addToCart() {
     if (!product) return;
@@ -33,7 +39,10 @@
       if (res.ok) {
         cartMessage = lang === 'th' ? 'เพิ่มลงตะกร้าแล้ว' : 'Added to cart';
       } else {
-        cartMessage = lang === 'th' ? 'ไม่สามารถเพิ่มได้' : 'Could not add to cart';
+        const json = await res.json().catch(() => null);
+        cartMessage =
+          (lang === 'th' ? json?.error?.message_th : json?.error?.message_en) ??
+          (lang === 'th' ? 'ไม่สามารถเพิ่มได้' : 'Could not add to cart');
       }
     } catch {
       cartMessage = lang === 'th' ? 'เกิดข้อผิดพลาด' : 'Error occurred';
@@ -47,6 +56,12 @@
   async function submitEnquiry() {
     if (!product) return;
 
+    enquiryError = '';
+    enquirySending = true;
+
+    // API expects a Unix timestamp in seconds; the date input gives YYYY-MM-DD.
+    const deliveryTs = enquiryDate ? Math.floor(new Date(enquiryDate).getTime() / 1000) : undefined;
+
     try {
       const res = await fetch('/api/v1/enquiries', {
         method: 'POST',
@@ -57,16 +72,24 @@
           phone: enquiryPhone,
           ribbonText: enquiryRibbon,
           venue: enquiryVenue,
-          deliveryDate: enquiryDate,
-          message: enquiryMessage,
+          deliveryDate: deliveryTs,
+          message: enquiryMessage || undefined,
         }),
       });
 
       if (res.ok) {
         enquirySubmitted = true;
+      } else {
+        const json = await res.json().catch(() => null);
+        enquiryError =
+          (lang === 'th' ? json?.error?.message_th : json?.error?.message_en) ??
+          (lang === 'th' ? 'ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่' : 'Could not send. Please try again.');
       }
     } catch {
-      // Handle error
+      enquiryError =
+        lang === 'th' ? 'ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่' : 'Could not send. Please try again.';
+    } finally {
+      enquirySending = false;
     }
   }
 </script>
@@ -78,12 +101,12 @@
 {#if product}
   <section class="pdp">
     <div class="container">
-      <nav class="breadcrumb" aria-label="Breadcrumb">
+      <nav class="breadcrumb" aria-label={lang === 'th' ? 'เส้นทาง' : 'Breadcrumb'}>
         <a href="/{lang}">{lang === 'th' ? 'หน้าแรก' : 'Home'}</a>
         <span class="breadcrumb-sep">/</span>
-        <a href="/{lang}/{data.division}">{data.division}</a>
+        <a href="/{lang}/{data.division}">{divisionName}</a>
         <span class="breadcrumb-sep">/</span>
-        <a href="/{lang}/{data.division}/{data.categorySlug}">{data.categorySlug}</a>
+        <a href="/{lang}/{data.division}/{data.categorySlug}">{data.categoryName}</a>
         <span class="breadcrumb-sep">/</span>
         <span>{lang === 'th' ? product.name_th : product.name_en}</span>
       </nav>
@@ -110,7 +133,7 @@
           <div class="workshop-plate reveal reveal-delay-2">
             <div class="plate-row">
               <span class="plate-label">{lang === 'th' ? 'กองงาน' : 'Workshop'}</span>
-              <span class="plate-value">{data.division}</span>
+              <span class="plate-value">{divisionName}</span>
             </div>
             {#if product.lotCode}
               <div class="plate-row">
@@ -118,16 +141,16 @@
                 <span class="plate-value mono">{product.lotCode}</span>
               </div>
             {/if}
-            {#if product.material}
+            {#if material}
               <div class="plate-row">
                 <span class="plate-label">{lang === 'th' ? 'วัสดุ' : 'Material'}</span>
-                <span class="plate-value">{product.material}</span>
+                <span class="plate-value">{material}</span>
               </div>
             {/if}
-            {#if product.handFinish}
+            {#if handFinish}
               <div class="plate-row">
-                <span class="plate-label">{lang === 'th' ? '_finish' : 'Finish'}</span>
-                <span class="plate-value">{product.handFinish}</span>
+                <span class="plate-label">{lang === 'th' ? 'งานทำมือ' : 'Finish'}</span>
+                <span class="plate-value">{handFinish}</span>
               </div>
             {/if}
           </div>
@@ -161,17 +184,24 @@
                   </div>
                   <div class="form-group">
                     <label for="phone">{lang === 'th' ? 'เบอร์โทร' : 'Phone'}</label>
-                    <input id="phone" type="tel" bind:value={enquiryPhone} required />
+                    <input
+                      id="phone"
+                      type="tel"
+                      inputmode="tel"
+                      pattern={'0[0-9]{8,9}'}
+                      bind:value={enquiryPhone}
+                      required
+                    />
                   </div>
                   <div class="form-group">
                     <label for="ribbon"
                       >{lang === 'th' ? 'ข้อความบนพวงมาลัย/พวงหรีด' : 'Ribbon text'}</label
                     >
-                    <input id="ribbon" type="text" bind:value={enquiryRibbon} />
+                    <input id="ribbon" type="text" bind:value={enquiryRibbon} required />
                   </div>
                   <div class="form-group">
                     <label for="venue">{lang === 'th' ? 'สถานที่' : 'Venue'}</label>
-                    <input id="venue" type="text" bind:value={enquiryVenue} />
+                    <input id="venue" type="text" bind:value={enquiryVenue} required />
                   </div>
                   <div class="form-group">
                     <label for="date">{lang === 'th' ? 'วันที่ต้องการ' : 'Desired date'}</label>
@@ -183,8 +213,18 @@
                     >
                     <textarea id="msg" bind:value={enquiryMessage} rows="3"></textarea>
                   </div>
-                  <button type="submit" class="btn-primary">
-                    {lang === 'th' ? 'ส่งข้อมูล' : 'Submit enquiry'}
+                  {#if enquiryError}
+                    <div class="form-error" role="alert">{enquiryError}</div>
+                  {/if}
+
+                  <button type="submit" class="btn-primary" disabled={enquirySending}>
+                    {enquirySending
+                      ? lang === 'th'
+                        ? 'กำลังส่ง...'
+                        : 'Sending...'
+                      : lang === 'th'
+                        ? 'ส่งข้อมูล'
+                        : 'Submit enquiry'}
                   </button>
                 </form>
               {/if}
@@ -206,10 +246,14 @@
                   onclick={() => {
                     if (quantity > 1) quantity--;
                   }}
-                  aria-label="Decrease">-</button
+                  aria-label={lang === 'th' ? 'ลดจำนวน' : 'Decrease'}>-</button
                 >
                 <span class="qty-value" aria-live="polite">{quantity}</span>
-                <button class="qty-btn" onclick={() => quantity++} aria-label="Increase">+</button>
+                <button
+                  class="qty-btn"
+                  onclick={() => quantity++}
+                  aria-label={lang === 'th' ? 'เพิ่มจำนวน' : 'Increase'}>+</button
+                >
               </div>
 
               <button class="btn-primary" onclick={addToCart}>
@@ -311,9 +355,17 @@
     border-top: 1px solid var(--line);
   }
 
+  .form-error {
+    padding: var(--space-sm) var(--space-md);
+    border-left: 2px solid #b3261e;
+    background: rgba(179, 38, 30, 0.06);
+    color: #b3261e;
+    font-size: 0.875rem;
+    margin-bottom: var(--space-md);
+  }
+
   .plate-label {
     color: var(--slate);
-    text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
   }

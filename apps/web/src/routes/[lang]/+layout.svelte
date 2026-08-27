@@ -1,6 +1,6 @@
 <script lang="ts">
-  import '../app.css';
   import type { Snippet } from 'svelte';
+  import { page } from '$app/state';
   import type { LayoutData } from './$types';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
@@ -19,8 +19,12 @@
         ],
   );
 
-  const otherLang = data.lang === 'th' ? 'en' : 'th';
-  const otherLabel = data.lang === 'th' ? 'EN' : 'TH';
+  const otherLang = $derived(data.lang === 'th' ? 'en' : 'th');
+  const otherLabel = $derived(data.lang === 'th' ? 'EN' : 'TH');
+
+  // Path without the leading /{lang} segment, so alternates can be built per language.
+  const barePath = $derived(page.url.pathname.replace(/^\/(th|en)/, ''));
+  const query = $derived(page.url.search);
 
   function switchLang() {
     document.cookie = `lang=${otherLang};path=/;max-age=31536000`;
@@ -30,12 +34,18 @@
   }
 </script>
 
+<svelte:head>
+  <link rel="alternate" hreflang="th" href="/th{barePath}{query}" />
+  <link rel="alternate" hreflang="en" href="/en{barePath}{query}" />
+  <link rel="alternate" hreflang="x-default" href="/th{barePath}{query}" />
+</svelte:head>
+
 <div class="app">
   <header class="nav">
     <div class="nav-inner container">
       <a href="/{data.lang}" class="nav-logo">CIDA Craft</a>
 
-      <nav class="nav-links" aria-label="Main navigation">
+      <nav class="nav-links" aria-label={data.lang === 'th' ? 'เมนูหลัก' : 'Main navigation'}>
         {#each nav as link}
           <a href={link.href} class="nav-link">{link.label}</a>
         {/each}
@@ -61,7 +71,11 @@
           </svg>
         </a>
 
-        <button class="nav-lang" onclick={switchLang} aria-label="Switch language">
+        <button
+          class="nav-lang"
+          onclick={switchLang}
+          aria-label={data.lang === 'th' ? 'เปลี่ยนภาษา' : 'Switch language'}
+        >
           {otherLabel}
         </button>
       </div>
@@ -191,9 +205,39 @@
     font-size: 0.75rem;
   }
 
+  /*
+   * Below 640px the links move to their own row under the bar instead of being
+   * hidden: at the 360px acceptance width the divisions must still be reachable,
+   * and a scrollable strip of real anchors keeps them keyboard-navigable.
+   */
   @media (max-width: 640px) {
+    .nav {
+      height: auto;
+    }
+
+    .nav-inner {
+      flex-wrap: wrap;
+      row-gap: var(--space-sm);
+      height: auto;
+      min-height: var(--nav-height);
+      padding-bottom: var(--space-sm);
+    }
+
     .nav-links {
+      order: 3;
+      width: 100%;
+      gap: var(--space-lg);
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: var(--space-xs);
+    }
+
+    .nav-links::-webkit-scrollbar {
       display: none;
+    }
+
+    .nav-link {
+      white-space: nowrap;
     }
   }
 </style>

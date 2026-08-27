@@ -56,6 +56,8 @@ export const products = pgTable(
       .notNull()
       .references(() => categories.id, { onDelete: 'restrict' }),
     sku: text('sku').notNull(),
+    slugTh: text('slug_th').notNull(),
+    slugEn: text('slug_en').notNull(),
     lotCode: text('lot_code').notNull(),
     purchaseMode: text('purchase_mode').notNull(),
     nameTh: text('name_th').notNull().default(''),
@@ -76,6 +78,10 @@ export const products = pgTable(
   },
   (t) => [
     uniqueIndex('products_sku_key').on(t.sku),
+    uniqueIndex('products_slug_th_key').on(t.slugTh),
+    uniqueIndex('products_slug_en_key').on(t.slugEn),
+    check('products_slug_th_format', slugCheck(t.slugTh)),
+    check('products_slug_en_format', slugCheck(t.slugEn)),
     index('products_category_idx').on(t.categoryId),
     index('products_status_idx').on(t.status),
     check('products_purchase_mode_check', sql`${t.purchaseMode} in ('cart', 'enquiry')`),

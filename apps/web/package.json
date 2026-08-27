@@ -10,8 +10,9 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "svelte-kit sync && tsc --noEmit",
-    "test": "vitest run"
+    "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

@@ -1,253 +1,411 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
-const BASE = 'http://localhost:5173';
+const API = process.env.E2E_API_URL ?? 'http://localhost:3000';
 
-// Helper: set language cookie and navigate
-async function withLang(page: import('@playwright/test').Page, lang: 'th' | 'en', path: string) {
+// Seeded fixtures (packages/db/src/seed.ts).
+const CART_PRODUCT = {
+  division: 'fiberglass',
+  category: 'fiberglass-products',
+  slug: 'fiberglass-planter-large',
+};
+const ENQUIRY_PRODUCT = {
+  division: 'florals',
+  category: 'funeral-wreaths',
+  slug: 'funeral-wreath-standing',
+};
+
+/**
+ * Navigate and wait for hydration. Interactive assertions (add-to-cart, enquiry
+ * submit) must not fire before Svelte has attached its handlers, or the click
+ * falls through to a native form submit and the test flakes.
+ */
+async function gotoHydrated(page: Page, path: string) {
+  await page.goto(path);
+  await page.waitForLoadState('networkidle');
+}
+
+async function withLang(page: Page, lang: 'th' | 'en', path: string) {
   await page.context().addCookies([{ name: 'lang', value: lang, domain: 'localhost', path: '/' }]);
-  await page.goto(`${BASE}/${lang}${path}`);
+  await gotoHydrated(page, `/${lang}${path}`);
+}
+
+function pdpPath(p: { division: string; category: string; slug: string }) {
+  return `/${p.division}/${p.category}/${p.slug}`;
 }
 
 // ============================================
-// Acceptance: Playwright at 360px in both languages
+// Acceptance: Playwright at 360px in both languages across nav/PDP/cart/checkout
 // ============================================
 
-test.describe('360px viewport — Thai', () => {
-  test.use({ viewport: { width: 360, height: 800 } });
+for (const lang of ['th', 'en'] as const) {
+  test.describe(`360px viewport — ${lang}`, () => {
+    test.use({ viewport: { width: 360, height: 800 } });
 
-  test('homepage renders hero + divisions', async ({ page }) => {
-    await withLang(page, 'th', '');
-    await expect(page.locator('h1')).toBeVisible();
-    await expect(page.locator('.division-card')).toHaveCount(3);
+    test('homepage renders hero + three divisions', async ({ page }) => {
+      await withLang(page, lang, '');
+      await expect(page.locator('h1')).toBeVisible();
+      await expect(page.locator('.division-card')).toHaveCount(3);
+    });
+
+    test('nav is visible and the page does not scroll horizontally', async ({ page }) => {
+      await withLang(page, lang, '');
+      await expect(page.locator('.nav-logo')).toBeVisible();
+      await expect(page.locator('.nav-cart')).toBeVisible();
+      await expect(page.locator('.nav-lang')).toBeVisible();
+
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow).toBeLessThanOrEqual(1);
+    });
+
+    test('division PLP lists categories from the API', async ({ page }) => {
+      await withLang(page, lang, `/${CART_PRODUCT.division}`);
+      await expect(page.locator('.category-card').first()).toBeVisible();
+    });
+
+    test('category PLP lists products from the API', async ({ page }) => {
+      await withLang(page, lang, `/${CART_PRODUCT.division}/${CART_PRODUCT.category}`);
+      await expect(page.locator('.product-card').first()).toBeVisible();
+    });
+
+    test('PDP renders the workshop plate', async ({ page }) => {
+      await withLang(page, lang, pdpPath(CART_PRODUCT));
+      await expect(page.locator('h1')).toBeVisible();
+      await expect(page.locator('.workshop-plate')).toBeVisible();
+      await expect(page.locator('.workshop-plate .plate-row')).not.toHaveCount(0);
+    });
+
+    test('cart page renders', async ({ page }) => {
+      await withLang(page, lang, '/cart');
+      await expect(page.locator('h1')).toContainText(lang === 'th' ? 'ตะกร้า' : 'Cart');
+    });
+
+    test('checkout page renders', async ({ page }) => {
+      await withLang(page, lang, '/checkout');
+      await expect(page.locator('h1')).toContainText(lang === 'th' ? 'ชำระเงิน' : 'Checkout');
+    });
   });
-
-  test('nav is visible at 360px', async ({ page }) => {
-    await withLang(page, 'th', '');
-    await expect(page.locator('.nav-logo')).toBeVisible();
-    await expect(page.locator('.nav-cart')).toBeVisible();
-    await expect(page.locator('.nav-lang')).toBeVisible();
-  });
-
-  test('division PLP shows categories', async ({ page }) => {
-    await withLang(page, 'th', '/fiberglass');
-    await expect(page.locator('h1')).toBeVisible();
-  });
-
-  test('cart page renders', async ({ page }) => {
-    await withLang(page, 'th', '/cart');
-    await expect(page.locator('h1')).toContainText('ตะกร้า');
-  });
-
-  test('checkout page renders', async ({ page }) => {
-    await withLang(page, 'th', '/checkout');
-    await expect(page.locator('h1')).toContainText('ชำระเงิน');
-  });
-});
-
-test.describe('360px viewport — English', () => {
-  test.use({ viewport: { width: 360, height: 800 } });
-
-  test('homepage renders hero + divisions', async ({ page }) => {
-    await withLang(page, 'en', '');
-    await expect(page.locator('h1')).toBeVisible();
-    await expect(page.locator('.division-card')).toHaveCount(3);
-  });
-
-  test('nav is visible at 360px', async ({ page }) => {
-    await withLang(page, 'en', '');
-    await expect(page.locator('.nav-logo')).toBeVisible();
-    await expect(page.locator('.nav-cart')).toBeVisible();
-  });
-
-  test('division PLP shows categories', async ({ page }) => {
-    await withLang(page, 'en', '/fiberglass');
-    await expect(page.locator('h1')).toBeVisible();
-  });
-
-  test('cart page renders', async ({ page }) => {
-    await withLang(page, 'en', '/cart');
-    await expect(page.locator('h1')).toContainText('Cart');
-  });
-
-  test('checkout page renders', async ({ page }) => {
-    await withLang(page, 'en', '/checkout');
-    await expect(page.locator('h1')).toContainText('Checkout');
-  });
-});
+}
 
 // ============================================
-// Acceptance: A11y — visible focus, real semantics, aria-live
+// Acceptance: A11y — visible focus, real semantics, aria-live, contrast
 // ============================================
 
 test.describe('Accessibility', () => {
-  test('nav links use real <a> elements', async ({ page }) => {
+  test('nav links and division cards are real anchors', async ({ page }) => {
     await withLang(page, 'th', '');
-    const navLinks = page.locator('.nav-link');
-    const count = await navLinks.count();
-    for (let i = 0; i < count; i++) {
-      const tag = await navLinks.nth(i).evaluate((el) => el.tagName);
-      expect(tag).toBe('A');
+    for (const selector of ['.nav-link', '.division-card']) {
+      const els = page.locator(selector);
+      const count = await els.count();
+      expect(count).toBeGreaterThan(0);
+      for (let i = 0; i < count; i++) {
+        await expect(els.nth(i)).toHaveJSProperty('tagName', 'A');
+      }
     }
   });
 
-  test('division cards use real <a> elements', async ({ page }) => {
-    await withLang(page, 'th', '');
-    const cards = page.locator('.division-card');
-    const count = await cards.count();
-    for (let i = 0; i < count; i++) {
-      const tag = await cards.nth(i).evaluate((el) => el.tagName);
-      expect(tag).toBe('A');
-    }
-  });
-
-  test('quantity buttons use real <button> elements', async ({ page }) => {
-    await withLang(page, 'th', '');
-    await page.goto(`${BASE}/th/fiberglass`);
-    // PDP has +/- buttons if product loads
+  test('quantity controls are real buttons with accessible names', async ({ page }) => {
+    await withLang(page, 'th', pdpPath(CART_PRODUCT));
     const buttons = page.locator('.qty-btn');
-    const count = await buttons.count();
-    for (let i = 0; i < count; i++) {
-      const tag = await buttons.nth(i).evaluate((el) => el.tagName);
-      expect(tag).toBe('BUTTON');
+    await expect(buttons).toHaveCount(2);
+    for (let i = 0; i < 2; i++) {
+      await expect(buttons.nth(i)).toHaveJSProperty('tagName', 'BUTTON');
+      const label = await buttons.nth(i).getAttribute('aria-label');
+      expect(label?.trim()).toBeTruthy();
     }
   });
 
-  test('cart page has aria-live on cart message', async ({ page }) => {
+  test('add-to-cart announces via an aria-live region', async ({ page }) => {
+    await withLang(page, 'th', pdpPath(CART_PRODUCT));
+    await page.click('.cart-section .btn-primary');
+
+    const msg = page.locator('.cart-msg');
+    await expect(msg).toBeVisible();
+    await expect(msg).toHaveAttribute('aria-live', 'polite');
+  });
+
+  test('cart page exposes an aria-live status region', async ({ page }) => {
     await withLang(page, 'th', '/cart');
-    // May or may not be visible, but should exist in DOM or be conditionally rendered
-    await expect(page.locator('h1')).toBeVisible();
+    const status = page.locator('.cart-status');
+    await expect(status).toHaveAttribute('aria-live', 'polite');
+    await expect(status).toHaveAttribute('role', 'status');
   });
 
-  test('enquiry form has labels associated with inputs', async ({ page }) => {
-    await withLang(page, 'th', '');
-    await page.goto(`${BASE}/th/florals`);
-    // Check if any labels exist with for attributes
-    const labels = page.locator('label[for]');
-    const count = await labels.count();
-    for (let i = 0; i < count; i++) {
-      const forAttr = await labels.nth(i).getAttribute('for');
-      expect(forAttr).toBeTruthy();
-    }
-  });
+  test('enquiry form errors are announced with role=alert', async ({ page }) => {
+    await withLang(page, 'th', pdpPath(ENQUIRY_PRODUCT));
 
-  test('skip link or landmark roles present', async ({ page }) => {
-    await withLang(page, 'th', '');
-    const main = page.locator('main');
-    await expect(main).toHaveCount(1);
-    const nav = page.locator('nav');
-    await expect(nav).toHaveCount(1);
-  });
-
-  test('focus-visible outline on interactive elements', async ({ page }) => {
-    await withLang(page, 'th', '');
-    // Check CSS custom property for focus
-    const focusStyle = await page.evaluate(() => {
-      const style = getComputedStyle(document.documentElement);
-      return style.getPropertyValue('--marigold').trim();
+    // Phone fails the API regex, so the server rejects and the alert must appear.
+    // Native validation is switched off so the request actually reaches the API.
+    await page.locator('.enquiry-form').evaluate((f) => {
+      (f as HTMLFormElement).noValidate = true;
     });
-    expect(focusStyle).toBe('#d99000');
+    await page.fill('#name', 'ทดสอบ ระบบ');
+    await page.fill('#phone', '12345');
+    await page.fill('#ribbon', 'ด้วยความอาลัย');
+    await page.fill('#venue', 'วัดทดสอบ');
+    await page.click('.enquiry-form .btn-primary');
+
+    await expect(page.locator('.enquiry-form .form-error')).toHaveAttribute('role', 'alert');
+  });
+
+  test('every label is associated with an existing control', async ({ page }) => {
+    await withLang(page, 'th', pdpPath(ENQUIRY_PRODUCT));
+    const orphans = await page.evaluate(() =>
+      [...document.querySelectorAll('label[for]')]
+        .map((l) => l.getAttribute('for') ?? '')
+        .filter((id) => !document.getElementById(id)),
+    );
+    expect(orphans).toEqual([]);
+  });
+
+  test('landmarks are present and every nav has an accessible name', async ({ page }) => {
+    await withLang(page, 'th', '');
+    await expect(page.locator('main')).toHaveCount(1);
+    await expect(page.locator('header')).toHaveCount(1);
+
+    const navNames = await page.evaluate(() =>
+      [...document.querySelectorAll('nav')].map((n) => n.getAttribute('aria-label') ?? ''),
+    );
+    expect(navNames.length).toBeGreaterThan(0);
+    expect(navNames.every((n) => n.trim().length > 0)).toBe(true);
+  });
+
+  test('keyboard focus is visible when tabbing through the nav', async ({ page }) => {
+    await withLang(page, 'th', '');
+
+    // Focus the logo, then Tab once — a keyboard move is what makes
+    // :focus-visible apply, which is where the outline lives.
+    await page.locator('.nav-logo').focus();
+    await page.keyboard.press('Tab');
+
+    const firstLink = page.locator('.nav-link').first();
+    await expect(firstLink).toBeFocused();
+
+    const outline = await firstLink.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { width: s.outlineWidth, style: s.outlineStyle };
+    });
+    expect(outline.style).not.toBe('none');
+    expect(parseFloat(outline.width)).toBeGreaterThan(0);
+  });
+
+  test('body text meets 4.5:1 contrast against the page background', async ({ page }) => {
+    await withLang(page, 'th', '');
+
+    const ratio = await page.evaluate(() => {
+      const parse = (c: string) => (c.match(/[0-9.]+/g) ?? []).slice(0, 3).map(Number);
+      const lum = (rgb: number[]) => {
+        const [r, g, b] = rgb.map((v) => {
+          const s = v / 255;
+          return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * (r ?? 0) + 0.7152 * (g ?? 0) + 0.0722 * (b ?? 0);
+      };
+      // body itself is transparent; walk up to the first painted background.
+      const effectiveBg = (start: Element) => {
+        let el: Element | null = start;
+        while (el) {
+          const bg = getComputedStyle(el).backgroundColor;
+          const parts = parse(bg);
+          const alpha = Number((bg.match(/[0-9.]+/g) ?? [])[3] ?? 1);
+          if (alpha > 0 && parts.length === 3) return parts;
+          el = el.parentElement;
+        }
+        return [255, 255, 255];
+      };
+
+      const style = getComputedStyle(document.body);
+      const a = lum(parse(style.color));
+      const b = lum(effectiveBg(document.body));
+      return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    });
+
+    expect(ratio).toBeGreaterThanOrEqual(4.5);
   });
 });
 
 // ============================================
-// Acceptance: Thai typography ≥15px, line-height ≥1.75, no uppercase
+// Acceptance: Thai body ≥15px, line-height ≥1.75, no uppercase transform on Thai
 // ============================================
 
 test.describe('Thai typography', () => {
-  test('Thai body text ≥15px', async ({ page }) => {
-    await withLang(page, 'th', '');
-    const body = page.locator('body');
-    const fontSize = await body.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    expect(fontSize).toBeGreaterThanOrEqual(15);
-  });
+  const paths = ['', `/${CART_PRODUCT.division}`, pdpPath(CART_PRODUCT), '/cart'];
 
-  test('Thai body line-height ≥1.75', async ({ page }) => {
-    await withLang(page, 'th', '');
-    const html = page.locator('[lang="th"]');
-    const lh = await html.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight));
-    const fs = await html.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    const ratio = lh / fs;
-    expect(ratio).toBeGreaterThanOrEqual(1.75);
-  });
-
-  test('no text-transform: uppercase on Thai elements', async ({ page }) => {
-    await withLang(page, 'th', '');
-    const allElements = await page.evaluate(() => {
-      const els = document.querySelectorAll('[lang="th"] *');
-      for (const el of els) {
-        const tt = getComputedStyle(el).textTransform;
-        if (tt === 'uppercase') return false;
-      }
-      return true;
+  for (const path of paths) {
+    test(`Thai body ≥15px and line-height ≥1.75 at ${path || '/'}`, async ({ page }) => {
+      await withLang(page, 'th', path);
+      const metrics = await page.evaluate(() => {
+        const s = getComputedStyle(document.body);
+        return { fs: parseFloat(s.fontSize), lh: parseFloat(s.lineHeight) };
+      });
+      expect(metrics.fs).toBeGreaterThanOrEqual(15);
+      expect(metrics.lh / metrics.fs).toBeGreaterThanOrEqual(1.75);
     });
-    expect(allElements).toBe(true);
-  });
 
-  test('English body text uses Inter font', async ({ page }) => {
+    test(`no uppercase transform on Thai at ${path || '/'}`, async ({ page }) => {
+      await withLang(page, 'th', path);
+      const uppercased = await page.evaluate(() =>
+        [...document.querySelectorAll('body *')]
+          .filter((el) => {
+            const tt = getComputedStyle(el).textTransform;
+            if (tt !== 'uppercase' && tt !== 'capitalize') return false;
+            // Only Thai script matters — Latin labels may still be uppercased.
+            return /[฀-๿]/.test(el.textContent ?? '');
+          })
+          .map((el) => el.tagName + '.' + String(el.className)),
+      );
+      expect(uppercased).toEqual([]);
+    });
+  }
+
+  test('html lang attribute follows the route', async ({ page }) => {
+    await withLang(page, 'th', '');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'th');
     await withLang(page, 'en', '');
-    const fontFamily = await page.evaluate(() => {
-      return getComputedStyle(document.body).fontFamily;
-    });
-    expect(fontFamily).toContain('Inter');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   });
 });
 
 // ============================================
-// Acceptance: Enquiry-only product cannot reach cart
+// Acceptance: enquiry-only product cannot reach cart end-to-end
 // ============================================
 
 test.describe('Enquiry-only products', () => {
-  test('florals division has no add-to-cart button (enquiry only)', async ({ page }) => {
-    await withLang(page, 'th', '');
-    // Navigate to florals — enquiry products should show enquiry form, not cart
-    await page.goto(`${BASE}/th/florals`);
+  test('PDP shows the enquiry form and no add-to-cart control', async ({ page }) => {
+    await withLang(page, 'th', pdpPath(ENQUIRY_PRODUCT));
 
-    // The division page should show categories
-    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator('.enquiry-form')).toBeVisible();
+    await expect(page.locator('.cart-section')).toHaveCount(0);
+    await expect(page.getByText('ติดต่อเจ้าหน้าที่เพื่อสั่งซื้อ')).toBeVisible();
+  });
 
-    // Check that the enquiry note text exists in the page content
-    const hasEnquiryNote = await page.evaluate(() => {
-      return document.body.textContent?.includes('ติดต่อเจ้าหน้าที่') ?? false;
+  test('funeral copy carries no exclamation marks or promo badges', async ({ page }) => {
+    await withLang(page, 'th', pdpPath(ENQUIRY_PRODUCT));
+    const text = (await page.locator('main').textContent()) ?? '';
+    expect(text).not.toContain('!');
+    expect(text).not.toContain('！');
+    await expect(page.locator('.badge, .promo, .sale-badge')).toHaveCount(0);
+  });
+
+  test('cart API rejects the enquiry product directly', async ({ request }) => {
+    const product = await request.get(`${API}/api/v1/catalog/products/${ENQUIRY_PRODUCT.slug}`);
+    expect(product.ok()).toBeTruthy();
+    const { data } = await product.json();
+
+    const res = await request.post(`${API}/api/v1/cart`, {
+      data: { productId: data.id, quantity: 1 },
     });
-    // This will be true when a product with enquiry mode is loaded
-    // For now, verify the page renders without cart button on enquiry products
-    expect(hasEnquiryNote || true).toBe(true);
+    expect(res.status()).toBe(400);
+
+    const body = await res.json();
+    expect(body.error.code).toBe('cart_enquiry_not_allowed');
+    expect(body.error.message_th).toBeTruthy();
+    expect(body.error.message_en).toBeTruthy();
+  });
+
+  test('checkout API rejects the enquiry product even if the cart is bypassed', async ({
+    request,
+  }) => {
+    const product = await request.get(`${API}/api/v1/catalog/products/${ENQUIRY_PRODUCT.slug}`);
+    const { data } = await product.json();
+
+    const res = await request.post(`${API}/api/v1/checkout`, {
+      data: {
+        items: [{ productId: data.id, quantity: 1 }],
+        contactName: 'ทดสอบ ระบบ',
+        phone: '0812345678',
+        shipping: {
+          addrLine1: '123 ถนนทดสอบ',
+          subdistrict: 'ทดสอบ',
+          district: 'ทดสอบ',
+          province: 'กรุงเทพมหานคร',
+          postcode: '10200',
+        },
+      },
+    });
+
+    expect(res.status()).toBe(400);
+    expect((await res.json()).error.code).toBe('checkout_enquiry_not_allowed');
   });
 });
 
 // ============================================
-// Acceptance: Redirect from / to preferred language
+// Positive control: a cart product does reach the cart
 // ============================================
 
-test.describe('Language redirect', () => {
-  test('root / redirects to /th or /en', async ({ page }) => {
-    await page.goto(`${BASE}/`);
-    const url = page.url();
-    expect(url.match(/\/(th|en)/)).toBeTruthy();
+test.describe('Cart flow', () => {
+  test('add to cart from PDP shows the line on the cart page', async ({ page }) => {
+    await withLang(page, 'th', pdpPath(CART_PRODUCT));
+    await page.click('.cart-section .btn-primary');
+    await expect(page.locator('.cart-msg')).toContainText('เพิ่มลงตะกร้าแล้ว');
+
+    await gotoHydrated(page, '/th/cart');
+    await expect(page.locator('.cart-item')).toHaveCount(1);
+    await expect(page.locator('.cart-summary')).toBeVisible();
+  });
+});
+
+// ============================================
+// Acceptance: root redirect by Accept-Language with cookie override; hreflang
+// ============================================
+
+test.describe('Language routing', () => {
+  test('/ redirects to /th or /en', async ({ page }) => {
+    await page.goto('/');
+    expect(page.url()).toMatch(/\/(th|en)$/);
   });
 
-  test('language switcher changes lang cookie', async ({ page }) => {
-    await withLang(page, 'th', '');
+  test('lang cookie overrides Accept-Language', async ({ page }) => {
+    await page
+      .context()
+      .addCookies([{ name: 'lang', value: 'en', domain: 'localhost', path: '/' }]);
+    await page.goto('/');
+    expect(page.url()).toContain('/en');
+  });
+
+  test('language switcher moves to the mirrored path', async ({ page }) => {
+    await withLang(page, 'th', pdpPath(CART_PRODUCT));
     await page.click('.nav-lang');
-    // After clicking, should redirect to the other language
-    await page.waitForURL(/\/(th|en)/);
-    const url = page.url();
-    expect(url).toContain('/en');
+    await page.waitForURL(/\/en\//);
+    expect(new URL(page.url()).pathname).toBe(`/en${pdpPath(CART_PRODUCT)}`);
+  });
+
+  test('every page carries th, en and x-default hreflang alternates', async ({ page }) => {
+    for (const path of ['', `/${CART_PRODUCT.division}`, pdpPath(CART_PRODUCT), '/cart']) {
+      await withLang(page, 'th', path);
+      await expect(page.locator('link[rel="alternate"][hreflang="th"]')).toHaveCount(1);
+      await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveCount(1);
+      await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveCount(1);
+
+      const en = await page.locator('link[rel="alternate"][hreflang="en"]').getAttribute('href');
+      expect(en).toBe(`/en${path}`);
+    }
   });
 });
 
 // ============================================
-// Acceptance: PDP workshop plate present
+// Acceptance: slug change produces a redirect row; old URL still resolves
 // ============================================
 
-test.describe('Workshop plate', () => {
-  test('workshop plate renders on PDP', async ({ page }) => {
-    await withLang(page, 'th', '');
-    await page.goto(`${BASE}/th/fiberglass`);
+test.describe('Slug redirects', () => {
+  test('an old product URL 301s to the current one', async ({ page, request }) => {
+    const oldPath = `/th/${CART_PRODUCT.division}/${CART_PRODUCT.category}/planter-old-slug`;
+    const newPath = `/th${pdpPath(CART_PRODUCT)}`;
 
-    // Check that workshop plate exists when a product is loaded
-    const plateExists = await page.locator('.workshop-plate').count();
-    // May be 0 if API not available, but the element should be in the template
-    expect(plateExists >= 0).toBe(true);
+    const created = await request.post(`${API}/api/v1/redirects`, {
+      data: { fromPath: oldPath, toPath: newPath, permanent: true },
+    });
+    expect(created.ok()).toBeTruthy();
+
+    const lookup = await request.get(
+      `${API}/api/v1/redirects/${encodeURIComponent(oldPath.slice(1))}`,
+    );
+    expect(lookup.ok()).toBeTruthy();
+    expect((await lookup.json()).data.to).toBe(newPath);
+
+    await page.goto(oldPath);
+    expect(new URL(page.url()).pathname).toBe(newPath);
+    await expect(page.locator('.workshop-plate')).toBeVisible();
   });
 });

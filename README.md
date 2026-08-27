@@ -241,7 +241,20 @@ pnpm.cmd -r typecheck
 pnpm.cmd -r lint          # eslint + prettier --check
 pnpm.cmd -r test          # vitest units; packages/money & promptpay include fast-check prop tests
 # integration: real Postgres via Testcontainers (P2+)
-# e2e (P5+): Playwright checkout + reconciliation paths
+```
+
+Storefront e2e (Playwright) runs against a live API + seeded database — it asserts the
+P8 acceptance criteria (360 px in both languages, a11y floor, Thai typography, the
+enquiry-only rule, slug redirects), so an empty catalogue makes it meaningless:
+
+```bash
+pnpm.cmd --filter @cida/db migrate
+pnpm.cmd --filter @cida/db seed        # divisions, categories and the sample catalogue
+pnpm.cmd --filter @cida/api dev        # API on :3000 (leave running)
+pnpm.cmd --filter @cida/web test:e2e   # starts the storefront itself
+
+# Override the ports when 5173/3000 are taken:
+#   WEB_PORT=5199 E2E_API_URL=http://localhost:3000 pnpm.cmd --filter @cida/web test:e2e
 ```
 
 Every bug fix ships with a regression test in the same commit.

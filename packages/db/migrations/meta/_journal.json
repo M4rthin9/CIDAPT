@@ -8,6 +8,13 @@
       "when": 1787736884763,
       "tag": "0000_sad_alex_power",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787816822880,
+      "tag": "0001_giant_shooting_star",
+      "breakpoints": true
     }
   ]
 }

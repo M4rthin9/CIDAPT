@@ -3,35 +3,122 @@
 
   let { data }: { data: PageData } = $props();
 
-  let shippingName = $state('');
-  let shippingAddress = $state('');
-  let shippingPhone = $state('');
-  let paymentMethod = $state('promptpay_billpay');
+  let contactName = $state('');
+  let contactPhone = $state('');
+  let contactEmail = $state('');
+  let addrLine1 = $state('');
+  let addrLine2 = $state('');
+  let subdistrict = $state('');
+  let district = $state('');
+  let province = $state('');
+  let postcode = $state('');
+  let shippingNote = $state('');
+  let couponCode = $state('');
   let submitting = $state(false);
-  let orderResult = $state<{ orderNo: string; paymentUrl: string } | null>(null);
+  let errorMessage = $state('');
+  let orderResult = $state<{
+    orderId: string;
+    orderNo: string;
+    totalSatang: number;
+    status: string;
+  } | null>(null);
+
+  const items = $derived(data.items ?? []);
+  const l = $derived(data.lang === 'th' ? 'th' : 'en');
+  const t = $derived(
+    l === 'th'
+      ? {
+          title: 'ชำระเงิน',
+          contactTitle: 'ข้อมูลติดต่อ',
+          name: 'ชื่อ-สกุล',
+          phone: 'เบอร์โทร',
+          email: 'อีเมล',
+          shippingTitle: 'ที่อยู่จัดส่ง',
+          addrLine1: 'ที่อยู่ (บ้านเลขที่, ถนน)',
+          addrLine2: 'ที่อยู่เพิ่มเติม (หมู่, อาคาร)',
+          subdistrict: 'ตำบล/แขวง',
+          district: 'อำเภอ/เขต',
+          province: 'จังหวัด',
+          postcode: 'รหัสไปรษณีย์',
+          note: 'หมายเหตุ',
+          coupon: 'รหัสส่วนลด',
+          itemsTitle: 'สินค้า',
+          empty: 'ยังไม่มีสินค้าในตะกร้า',
+          submit: 'ยืนยันคำสั่งซื้อ',
+          processing: 'กำลังดำเนินการ...',
+          successTitle: 'สั่งซื้อสำเร็จ',
+          orderNo: 'เลขที่คำสั่งซื้อ',
+          payCta: 'ชำระเงิน',
+          errorGeneric: 'เกิดข้อผิดพลาด กรุณาลองใหม่',
+          backToCart: 'กลับไปตะกร้า',
+          goShopping: 'เลือกชมสินค้า',
+        }
+      : {
+          title: 'Checkout',
+          contactTitle: 'Contact',
+          name: 'Full name',
+          phone: 'Phone',
+          email: 'Email',
+          shippingTitle: 'Shipping address',
+          addrLine1: 'Address (number, street)',
+          addrLine2: 'Address line 2 (village, building)',
+          subdistrict: 'Subdistrict',
+          district: 'District',
+          province: 'Province',
+          postcode: 'Postcode',
+          note: 'Note',
+          coupon: 'Coupon code',
+          itemsTitle: 'Items',
+          empty: 'Your cart is empty',
+          submit: 'Place order',
+          processing: 'Processing...',
+          successTitle: 'Order placed',
+          orderNo: 'Order No.',
+          payCta: 'Pay now',
+          errorGeneric: 'An error occurred. Please try again.',
+          backToCart: 'Back to cart',
+          goShopping: 'Continue shopping',
+        },
+  );
 
   async function submitOrder() {
+    errorMessage = '';
     submitting = true;
     try {
       const res = await fetch('/api/v1/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          items,
+          couponCode: couponCode ? couponCode.trim().toUpperCase() : undefined,
+          contactName,
+          phone: contactPhone,
+          email: contactEmail || undefined,
           shipping: {
-            name: shippingName,
-            address: shippingAddress,
-            phone: shippingPhone,
+            addrLine1,
+            addrLine2: addrLine2 || undefined,
+            subdistrict,
+            district,
+            province,
+            postcode,
           },
-          paymentMethod,
+          shippingNote: shippingNote || undefined,
         }),
       });
 
       if (res.ok) {
         const json = await res.json();
         orderResult = json.data;
+      } else {
+        const json = await res.json();
+        errorMessage = json?.error?.message_th
+          ? l === 'th'
+            ? json.error.message_th
+            : json.error.message_en
+          : t.errorGeneric;
       }
     } catch {
-      // Handle error
+      errorMessage = t.errorGeneric;
     } finally {
       submitting = false;
     }
@@ -47,14 +134,20 @@
     {#if orderResult}
       <!-- Order Success -->
       <div class="checkout-success reveal">
-        <h1>{data.lang === 'th' ? 'สั่งซื้อสำเร็จ' : 'Order placed'}</h1>
+        <h1>{t.successTitle}</h1>
         <p class="success-order-no mono">{orderResult.orderNo}</p>
-        <a href={orderResult.paymentUrl} class="btn-primary">
-          {data.lang === 'th' ? 'ชำระเงิน' : 'Pay now'}
-        </a>
+        <p class="success-note">
+          {l === 'th'
+            ? 'กรุณาชำระเงินภายในเวลาที่กำหนดเพื่อยืนยันคำสั่งซื้อ'
+            : 'Please pay within the required time to confirm your order'}
+        </p>
       </div>
     {:else}
-      <h1 class="checkout-title">{data.lang === 'th' ? 'ชำระเงิน' : 'Checkout'}</h1>
+      <h1 class="checkout-title">{t.title}</h1>
+
+      {#if errorMessage}
+        <div class="form-error" role="alert">{errorMessage}</div>
+      {/if}
 
       <form
         class="checkout-form"
@@ -63,65 +156,98 @@
           submitOrder();
         }}
       >
+        <!-- Items -->
+        <fieldset class="checkout-section">
+          <legend>{t.itemsTitle}</legend>
+          {#if items.length > 0}
+            <p class="item-count mono">{items.length}</p>
+          {:else}
+            <p>{t.empty}</p>
+            <a href="/{l}" class="empty-link">{t.goShopping}</a>
+          {/if}
+        </fieldset>
+
+        <!-- Contact -->
+        <fieldset class="checkout-section">
+          <legend>{t.contactTitle}</legend>
+
+          <div class="form-group">
+            <label for="cname">{t.name}</label>
+            <input id="cname" type="text" bind:value={contactName} required />
+          </div>
+
+          <div class="form-group">
+            <label for="cphone">{t.phone}</label>
+            <input
+              id="cphone"
+              type="tel"
+              inputmode="tel"
+              pattern={'0[0-9]{8,9}'}
+              bind:value={contactPhone}
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="cemail">{t.email}</label>
+            <input id="cemail" type="email" bind:value={contactEmail} />
+          </div>
+        </fieldset>
+
         <!-- Shipping -->
         <fieldset class="checkout-section">
-          <legend>{data.lang === 'th' ? 'ที่อยู่จัดส่ง' : 'Shipping address'}</legend>
+          <legend>{t.shippingTitle}</legend>
 
           <div class="form-group">
-            <label for="name">{data.lang === 'th' ? 'ชื่อ-สกุล' : 'Full name'}</label>
-            <input id="name" type="text" bind:value={shippingName} required />
+            <label for="addr1">{t.addrLine1}</label>
+            <input id="addr1" type="text" bind:value={addrLine1} required />
           </div>
 
           <div class="form-group">
-            <label for="phone">{data.lang === 'th' ? 'เบอร์โทร' : 'Phone'}</label>
-            <input id="phone" type="tel" bind:value={shippingPhone} required />
+            <label for="addr2">{t.addrLine2}</label>
+            <input id="addr2" type="text" bind:value={addrLine2} />
           </div>
 
           <div class="form-group">
-            <label for="address">{data.lang === 'th' ? 'ที่อยู่' : 'Address'}</label>
-            <textarea id="address" bind:value={shippingAddress} rows="3" required></textarea>
+            <label for="subdistrict">{t.subdistrict}</label>
+            <input id="subdistrict" type="text" bind:value={subdistrict} required />
+          </div>
+
+          <div class="form-group">
+            <label for="district">{t.district}</label>
+            <input id="district" type="text" bind:value={district} required />
+          </div>
+
+          <div class="form-group">
+            <label for="province">{t.province}</label>
+            <input id="province" type="text" bind:value={province} required />
+          </div>
+
+          <div class="form-group">
+            <label for="postcode">{t.postcode}</label>
+            <input
+              id="postcode"
+              type="text"
+              inputmode="numeric"
+              pattern={'[0-9]{5}'}
+              bind:value={postcode}
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="note">{t.note}</label>
+            <textarea id="note" bind:value={shippingNote} rows="2"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="coupon">{t.coupon}</label>
+            <input id="coupon" type="text" bind:value={couponCode} />
           </div>
         </fieldset>
 
-        <!-- Payment -->
-        <fieldset class="checkout-section">
-          <legend>{data.lang === 'th' ? 'วิธีชำระเงิน' : 'Payment method'}</legend>
-
-          <label class="radio-option">
-            <input
-              type="radio"
-              name="payment"
-              value="promptpay_billpay"
-              bind:group={paymentMethod}
-            />
-            <span class="radio-label">PromptPay (Bill Payment)</span>
-          </label>
-
-          <label class="radio-option">
-            <input
-              type="radio"
-              name="payment"
-              value="promptpay_ewallet"
-              bind:group={paymentMethod}
-            />
-            <span class="radio-label">PromptPay (eWallet)</span>
-          </label>
-
-          <label class="radio-option">
-            <input type="radio" name="payment" value="bank_transfer" bind:group={paymentMethod} />
-            <span class="radio-label">{data.lang === 'th' ? 'โอนผ่านธนาคาร' : 'Bank transfer'}</span
-            >
-          </label>
-        </fieldset>
-
-        <button type="submit" class="btn-primary" disabled={submitting}>
-          {submitting
-            ? data.lang === 'th'
-              ? 'กำลังดำเนินการ...'
-              : 'Processing...'
-            : data.lang === 'th'
-              ? 'ยืนยันคำสั่งซื้อ'
-              : 'Place order'}
+        <button type="submit" class="btn-primary" disabled={submitting || items.length === 0}>
+          {submitting ? t.processing : t.submit}
         </button>
       </form>
     {/if}
@@ -187,16 +313,19 @@
     outline-offset: 1px;
   }
 
-  .radio-option {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) 0;
-    cursor: pointer;
+  .empty-link {
+    display: inline-block;
+    margin-top: var(--space-sm);
+    font-size: 0.875rem;
   }
 
-  .radio-label {
+  .form-error {
+    padding: var(--space-sm) var(--space-md);
+    border-left: 2px solid #b3261e;
+    background: rgba(179, 38, 30, 0.06);
+    color: #b3261e;
     font-size: 0.875rem;
+    margin-bottom: var(--space-lg);
   }
 
   .btn-primary {
@@ -240,10 +369,5 @@
 
   .mono {
     font-family: var(--font-mono);
-  }
-
-  .checkout-success .btn-primary {
-    max-width: 320px;
-    margin: 0 auto;
   }
 </style>

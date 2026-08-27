@@ -67,7 +67,8 @@ enquiries.post('/', async (c) => {
     data: {
       enquiryId: enquiry.id,
       status: 'new',
-      message: 'ขอบคุณที่ติดต่อ — เราจะติดต่อกลับโดยเร็ว',
+      message_th: 'ได้รับข้อมูลแล้ว เจ้าหน้าที่จะติดต่อกลับโดยเร็ว',
+      message_en: 'Received — an officer will contact you shortly.',
     },
   });
 });

@@ -20,6 +20,7 @@
     "@cida/db": "workspace:*",
     "@cida/promptpay": "workspace:*",
     "@cida/storage": "workspace:*",
+    "@hono/node-server": "^2.1.1",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.8.0",
     "pg": "^8.23.0",

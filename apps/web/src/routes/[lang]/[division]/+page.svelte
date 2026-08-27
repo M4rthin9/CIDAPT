@@ -5,22 +5,26 @@
 
   const division = $derived(data.division);
 
-  const divisionLabels: Record<string, Record<string, { name: string; desc: string }>> = {
+  // Names come from the divisions table; the standfirst copy is storefront-only.
+  const divisionDesc: Record<string, Record<string, string>> = {
     fiberglass: {
-      th: { name: 'ไฟเบอร์กลาส', desc: 'ผลิตภัณฑ์ไฟเบอร์กลาส ไม้ และเรซิ่น' },
-      en: { name: 'Fiberglass', desc: 'Fiberglass, wood, and resin products' },
+      th: 'ผลิตภัณฑ์ไฟเบอร์กลาส ไม้ และเรซิ่น',
+      en: 'Fiberglass, wood, and resin products',
     },
     needlework: {
-      th: { name: 'เย็บปักถักร้อย', desc: 'เสื้อเย็บปักลาย เครื่องแต่งกาย' },
-      en: { name: 'Needlework', desc: 'Embroidered shirts and apparel' },
+      th: 'เสื้อเย็บปักลาย เครื่องแต่งกาย',
+      en: 'Embroidered shirts and apparel',
     },
     florals: {
-      th: { name: 'ดอกไม้ประดิษฐ์', desc: 'พวงมาลา พวงหรีด สำหรับงานพิธี' },
-      en: { name: 'Artificial Flowers', desc: 'Memorial and funeral wreaths' },
+      th: 'พวงมาลา พวงหรีด สำหรับงานพิธี',
+      en: 'Memorial and funeral wreaths',
     },
   };
 
-  const info = $derived(divisionLabels[division]?.[data.lang] ?? { name: division, desc: '' });
+  const info = $derived({
+    name: data.lang === 'th' ? data.divisionInfo.name_th : data.divisionInfo.name_en,
+    desc: divisionDesc[division]?.[data.lang] ?? '',
+  });
 </script>
 
 <svelte:head>
@@ -41,7 +45,7 @@
       <div class="category-grid">
         {#each data.categories as cat, i}
           <a
-            href="/{data.lang}/{division}/{cat.slug}"
+            href="/{data.lang}/{division}/{data.lang === 'th' ? cat.slug_th : cat.slug_en}"
             class="category-card reveal reveal-delay-{(i % 3) + 1}"
           >
             <div class="category-img"></div>

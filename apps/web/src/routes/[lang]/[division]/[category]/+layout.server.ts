@@ -1,19 +1,40 @@
+import { apiFetch } from '$lib/server/api';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ params, fetch, parent }) => {
-  const { lang, division, category } = params;
-  const parentData = await parent();
+type Category = {
+  slug: string;
+  slug_th: string;
+  slug_en: string;
+  name_th: string;
+  name_en: string;
+};
+type ProductCard = {
+  id: string;
+  slug: string;
+  slug_th: string;
+  slug_en: string;
+  name_th: string;
+  name_en: string;
+  purchaseMode: string;
+  priceFormatted: string;
+};
 
-  // Fetch category + products from API
-  let categoryData: { name_th: string; name_en: string } | null = null;
-  let products: { slug: string; name_th: string; name_en: string; priceFormatted: string }[] = [];
+export const load: LayoutServerLoad = async (event) => {
+  const { lang, division, category } = event.params;
+  const parentData = await event.parent();
+
+  let categoryData: Category | null = null;
+  let products: ProductCard[] = [];
 
   try {
-    const res = await fetch(
-      `http://localhost:3000/api/v1/catalog/divisions/${division}/categories/${category}/products`,
+    const res = await apiFetch(
+      event,
+      `/api/v1/catalog/divisions/${division}/categories/${category}/products`,
     );
     if (res.ok) {
-      const json = await res.json();
+      const json = (await res.json()) as {
+        data?: { category?: Category; products?: ProductCard[] };
+      };
       categoryData = json.data?.category ?? null;
       products = json.data?.products ?? [];
     }
@@ -21,16 +42,24 @@ export const load: LayoutServerLoad = async ({ params, fetch, parent }) => {
     // API not available
   }
 
-  // Find division name from parent
-  const divCat = parentData.categories?.find((c: { slug: string }) => c.slug === category);
+  const fallback = parentData.categories?.find(
+    (c) => c.slug_th === category || c.slug_en === category,
+  );
 
   return {
     lang,
     division,
     categorySlug: category,
-    category: categoryData ?? divCat ?? { name_th: category, name_en: category },
-    divisionName_th: division,
-    divisionName_en: division,
+    category: categoryData ??
+      fallback ?? {
+        slug: category,
+        slug_th: category,
+        slug_en: category,
+        name_th: category,
+        name_en: category,
+      },
+    divisionName_th: parentData.divisionInfo.name_th,
+    divisionName_en: parentData.divisionInfo.name_en,
     products,
   };
 };

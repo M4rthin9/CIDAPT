@@ -52,6 +52,9 @@ importers:
       '@cida/storage':
         specifier: workspace:*
         version: link:../../packages/storage
+      '@hono/node-server':
+        specifier: ^2.1.1
+        version: 2.1.1(hono@4.13.4)
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@types/pg@8.23.1)(pg@8.23.0)
