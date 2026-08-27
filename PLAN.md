@@ -41,8 +41,8 @@ every phase by reference.
 | P4    | API core               | done        |
 | P5    | Orders & payments      | done        |
 | P6    | Tax & finance          | done        |
-| P7    | Worker & notifications | in-progress |
-| P8    | Storefront             | pending     |
+| P7    | Worker & notifications | done        |
+| P8    | Storefront             | in-progress |
 | P9    | Admin SPA              | pending     |
 | P10   | Ops hardening & launch | pending     |
 
