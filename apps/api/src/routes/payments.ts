@@ -232,28 +232,56 @@ paymentsRoutes.post('/reconcile', async (c) => {
     );
   }
 
-  const [newPayment] = await db.instance
-    .insert(payments)
-    .values({
-      orderId,
-      rail: event.rail,
-      status: 'verified',
-      amountSatang: event.amountSatang,
-      transRef: event.transRef ?? null,
-      externalRef: event.externalRef ?? null,
-      verifiedVia: 'provider_lookup',
-      verifiedAt: now,
-      settledAt: now,
-      initiatedAt: now,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .returning();
+  let newPayment: any;
+  try {
+    [newPayment] = await db.instance
+      .insert(payments)
+      .values({
+        orderId,
+        rail: event.rail,
+        status: 'verified',
+        amountSatang: event.amountSatang,
+        transRef: event.transRef ?? null,
+        externalRef: event.externalRef ?? null,
+        verifiedVia: 'provider_lookup',
+        verifiedAt: now,
+        settledAt: now,
+        initiatedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+  } catch (err: any) {
+    // Concurrent duplicate — re-query existing row
+    if (err?.code === '23505') {
+      const [existing] = await db.instance
+        .select()
+        .from(payments)
+        .where(eq(payments.orderId, orderId))
+        .limit(1);
+      if (existing) {
+        return c.json({
+          data: {
+            paymentId: existing.id,
+            status: 'already_verified',
+          },
+        });
+      }
+    }
+    throw err;
+  }
 
   await db.instance
     .update(orders)
     .set({ status: 'paid', paidAt: now, updatedAt: now })
     .where(eq(orders.id, orderId));
+
+  await writeAuditLog(c, {
+    action: 'payment.reconcile',
+    entityType: 'payment',
+    entityId: newPayment?.id ?? '',
+    afterState: { orderId, rail: event.rail, transRef: event.transRef },
+  });
 
   return c.json({
     data: {

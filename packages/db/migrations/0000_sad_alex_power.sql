@@ -211,7 +211,7 @@ CREATE TABLE "payments" (
 	CONSTRAINT "payments_status_check" CHECK ("payments"."status" in ('pending', 'awaiting_provider', 'verified', 'failed', 'cancelled', 'refund_recorded')),
 	CONSTRAINT "payments_verified_via_check" CHECK ("payments"."verified_via" is null or "payments"."verified_via" in ('provider_lookup', 'statement_match', 'manual_override')),
 	CONSTRAINT "payments_amount_positive" CHECK ("payments"."amount_satang" > 0),
-	CONSTRAINT "payments_verified_has_trans_ref" CHECK ("payments"."status" <> 'verified' or "payments"."trans_ref" is not null),
+	CONSTRAINT "payments_verified_has_trans_ref" CHECK ("payments"."status" <> 'verified' or "payments"."trans_ref" is not null or "payments"."verified_via" = 'manual_override'),
 	CONSTRAINT "payments_manual_override_needs_reason" CHECK ("payments"."verified_via" <> 'manual_override' or "payments"."verified_reason" is not null)
 );
 --> statement-breakpoint

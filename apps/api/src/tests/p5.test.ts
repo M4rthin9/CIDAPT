@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
 import { AppError } from '../errors';
@@ -89,7 +89,7 @@ describe('P5 — Orders & payments logic', () => {
   describe('manual verify requires superadmin + reason', () => {
     const app = withErrorHandler(new Hono());
 
-    app.post('/manual-verify', mockAuth('officer'), async (c) => {
+    app.post('/manual-verify', mockAuth('officer'), async () => {
       throw new AppError('forbidden', 'ไม่มีสิทธิ์', 'Forbidden', 403);
     });
 
@@ -147,7 +147,7 @@ describe('P5 — Orders & payments logic', () => {
 
     app.post('/reconcile', async (c) => {
       const body = await c.req.json();
-      const { transRef, status } = body as { transRef: string; status?: string };
+      const { transRef } = body as { transRef: string };
 
       // Idempotent: if already verified, return existing
       const existing = [...payments.values()].find((p) => p.transRef === transRef);

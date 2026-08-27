@@ -48,9 +48,10 @@ export const payments = pgTable(
     check('payments_amount_positive', sql`${t.amountSatang} > 0`),
     // Non-negotiable #3/#4: a verified payment must carry a trans_ref that a
     // provider lookup (or matched statement line) can be keyed on.
+    // Exception: manual_override (superadmin attests payment happened offline).
     check(
       'payments_verified_has_trans_ref',
-      sql`${t.status} <> 'verified' or ${t.transRef} is not null`,
+      sql`${t.status} <> 'verified' or ${t.transRef} is not null or ${t.verifiedVia} = 'manual_override'`,
     ),
     check(
       'payments_manual_override_needs_reason',
