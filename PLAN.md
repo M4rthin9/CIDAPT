@@ -38,7 +38,7 @@ every phase by reference.
 | P1    | Infra skeleton         | done      |
 | P2    | Data model             | done      |
 | P3    | Pure packages          | done      |
-| P4    | API core               | in-progress |
+| P4    | API core               | done      |
 | P5    | Orders & payments      | pending   |
 | P6    | Tax & finance          | pending   |
 | P7    | Worker & notifications | pending   |
@@ -155,10 +155,10 @@ every phase by reference.
 
 **Acceptance criteria**
 
-- [ ] Route contract tests from contracts package.
-- [ ] RBAC matrix test: every route × role × expected outcome.
+- [x] Route contract tests from contracts package.
+- [x] RBAC matrix test: every route × role × expected outcome.
 - [x] Invalid env fails boot with actionable message.
-- [ ] Image ladder generated at upload; originals never served raw.
+- [x] Image ladder generated at upload; originals never served raw.
 
 **Gates:** none formal.
 

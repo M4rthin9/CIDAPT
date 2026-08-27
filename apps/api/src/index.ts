@@ -7,6 +7,7 @@ import { loadEnv } from './config';
 import health from './routes/health';
 import authRoutes from './routes/auth';
 import settings from './routes/settings';
+import upload from './routes/upload';
 
 const env = loadEnv();
 createLogger(env);
@@ -25,6 +26,9 @@ app.route('/api/v1/auth', authRoutes);
 
 // Settings (superadmin only)
 app.route('/api/v1/settings', settings);
+
+// Upload (admin+)
+app.route('/api/v1/upload', upload);
 
 // Global error handler
 app.onError((err, c) => {
