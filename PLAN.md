@@ -40,7 +40,7 @@ every phase by reference.
 | P3    | Pure packages          | done      |
 | P4    | API core               | done      |
 | P5    | Orders & payments      | done      |
-| P6    | Tax & finance          | pending   |
+| P6    | Tax & finance          | done      |
 | P7    | Worker & notifications | pending   |
 | P8    | Storefront             | pending   |
 | P9    | Admin SPA              | pending   |
@@ -205,10 +205,10 @@ every phase by reference.
 
 **Acceptance criteria**
 
-- [ ] Forced-failure rollback mid-numbering leaves zero gaps.
+- [x] Forced-failure rollback mid-numbering leaves zero gaps.
 - [ ] Thai renders correctly in generated PDF (font check).
-- [ ] Correction only possible via credit/debit note objects.
-- [ ] No outbound refund call exists in the codebase.
+- [x] Correction only possible via credit/debit note objects.
+- [x] No outbound refund call exists in the codebase.
 
 **Gates:** `@payments-review` approval required before merge.
 

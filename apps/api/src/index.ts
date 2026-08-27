@@ -11,6 +11,8 @@ import upload from './routes/upload';
 import checkout from './routes/checkout';
 import paymentsRoutes from './routes/payments';
 import enquiries from './routes/enquiries';
+import taxInvoicesRoutes from './routes/tax-invoices';
+import creditNotesRoutes from './routes/credit-notes';
 
 const env = loadEnv();
 createLogger(env);
@@ -41,6 +43,12 @@ app.route('/api/v1/payments', paymentsRoutes);
 
 // Enquiries (public — enquiry products)
 app.route('/api/v1/enquiries', enquiries);
+
+// Tax invoices (admin+)
+app.route('/api/v1/tax-invoices', taxInvoicesRoutes);
+
+// Credit notes (admin+)
+app.route('/api/v1/credit-notes', creditNotesRoutes);
 
 // Global error handler
 app.onError((err, c) => {
