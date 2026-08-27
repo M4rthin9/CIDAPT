@@ -5,5 +5,31 @@
   "type": "module",
   "engines": {
     "node": "^22.0.0"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@cida/contracts": "workspace:*",
+    "@cida/db": "workspace:*",
+    "@cida/storage": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.8.0",
+    "pg": "^8.23.0",
+    "pino": "^9.7.0",
+    "pino-pretty": "^13.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.0",
+    "tsx": "^4.23.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
   }
 }
