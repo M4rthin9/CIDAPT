@@ -1,15 +1,8 @@
 import { Worker, Job } from 'bullmq';
-import IORedis from 'ioredis';
 import { pino } from 'pino';
+import { connection, reconciliationQueue } from '../queues';
 
 const log = pino({ name: 'worker:reconciliation', level: process.env.LOG_LEVEL ?? 'info' });
-
-const REDIS_URL = process.env.VALKEY_URL ?? 'redis://:changeme@localhost:6379';
-const connection = new IORedis(REDIS_URL, {
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
-  lazyConnect: true,
-});
 
 interface ReconciliationJobData {
   provider: string;
@@ -23,9 +16,6 @@ const worker = new Worker<ReconciliationJobData>(
     log.info({ jobId: job.id, provider, since }, 'Reconciliation poll started');
 
     // TODO: implement real provider polling in P7+
-    // For now, this is a stub that logs and completes
-    // Real implementation will call ReconciliationProvider.poll() and ingest new events
-
     log.info({ jobId: job.id }, 'Reconciliation poll completed (stub)');
     return { processed: 0 };
   },
@@ -34,7 +24,7 @@ const worker = new Worker<ReconciliationJobData>(
     concurrency: 1,
     limiter: {
       max: 1,
-      duration: 60_000, // max 1 job per minute
+      duration: 60_000,
     },
   },
 );
@@ -47,15 +37,12 @@ worker.on('failed', (job, err) => {
   log.error({ jobId: job?.id, error: err.message }, 'Reconciliation job failed');
 });
 
-// Repeatable schedule: every 5 minutes
-import { reconciliationQueue } from '../index';
-
 reconciliationQueue.add(
   'poll',
   { provider: 'fake' },
   {
     repeat: {
-      every: 5 * 60 * 1000, // 5 minutes
+      every: 5 * 60 * 1000,
     },
     removeOnComplete: 10,
     removeOnFail: 20,

@@ -1,15 +1,8 @@
 import { Worker, Job } from 'bullmq';
-import IORedis from 'ioredis';
 import { pino } from 'pino';
+import { connection } from '../queues';
 
 const log = pino({ name: 'worker:notify', level: process.env.LOG_LEVEL ?? 'info' });
-
-const REDIS_URL = process.env.VALKEY_URL ?? 'redis://:changeme@localhost:6379';
-const connection = new IORedis(REDIS_URL, {
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
-  lazyConnect: true,
-});
 
 interface NotifyJobData {
   channel: 'line' | 'email';
@@ -23,15 +16,10 @@ interface NotifyJobData {
 const worker = new Worker<NotifyJobData>(
   'notify',
   async (job: Job<NotifyJobData>) => {
-    const { channel, to, subject, body } = job.data;
+    const { channel, to, subject } = job.data;
     log.info({ jobId: job.id, channel, to }, 'Notification started');
 
     // TODO: implement real LINE + SMTP delivery in P7+
-    // For now, this is a stub that logs and completes
-    // Real implementation will:
-    // - LINE: call LINE Messaging API push message
-    // - Email: call SMTP via Mailpit (dev) or production SMTP
-
     if (channel === 'line') {
       log.info({ jobId: job.id, to }, 'LINE message sent (stub)');
     } else if (channel === 'email') {
@@ -45,7 +33,7 @@ const worker = new Worker<NotifyJobData>(
     concurrency: 5,
     limiter: {
       max: 10,
-      duration: 60_000, // max 10 jobs per minute
+      duration: 60_000,
     },
   },
 );

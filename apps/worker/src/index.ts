@@ -1,21 +1,7 @@
-import { Worker, Queue, QueueScheduler } from 'bullmq';
-import IORedis from 'ioredis';
 import { pino } from 'pino';
+import { connection, reconciliationQueue, notifyQueue, enquiryQueue } from './queues';
 
 const log = pino({ name: 'worker', level: process.env.LOG_LEVEL ?? 'info' });
-
-const REDIS_URL = process.env.VALKEY_URL ?? 'redis://:changeme@localhost:6379';
-
-const connection = new IORedis(REDIS_URL, {
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
-  lazyConnect: true,
-});
-
-// Queue definitions
-export const reconciliationQueue = new Queue('reconciliation', { connection });
-export const notifyQueue = new Queue('notify', { connection });
-export const enquiryQueue = new Queue('enquiry', { connection });
 
 // Graceful shutdown
 let isShuttingDown = false;
