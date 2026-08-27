@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth';
 import { requireMinRole } from '../middleware/rbac';
 import { writeAuditLog } from '../middleware/audit';

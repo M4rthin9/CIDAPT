@@ -106,7 +106,7 @@ describe('Route input validation', () => {
       body: JSON.stringify({ email: 'not-email', password: 'pass' }),
     });
     expect(res.status).toBe(422);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error.code).toBe('validation_error');
   });
 

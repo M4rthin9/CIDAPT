@@ -39,7 +39,7 @@ every phase by reference.
 | P2    | Data model             | done      |
 | P3    | Pure packages          | done      |
 | P4    | API core               | done      |
-| P5    | Orders & payments      | pending   |
+| P5    | Orders & payments      | in-review |
 | P6    | Tax & finance          | pending   |
 | P7    | Worker & notifications | pending   |
 | P8    | Storefront             | pending   |
@@ -182,10 +182,10 @@ every phase by reference.
 **Acceptance criteria**
 
 - [ ] Playwright: full checkout path green.
-- [ ] Duplicate webhook/statement line ingested twice → single payment row.
-- [ ] Negative test proves a slip/mini-QR cannot move an order to verified.
-- [ ] Manual verify requires reason + superadmin; audit entry flagged red.
-- [ ] Enquiry product rejected by cart API with proper error envelope.
+- [x] Duplicate webhook/statement line ingested twice → single payment row.
+- [x] Negative test proves a slip/mini-QR cannot move an order to verified.
+- [x] Manual verify requires reason + superadmin; audit entry flagged red.
+- [x] Enquiry product rejected by cart API with proper error envelope.
 - [ ] Adding a rail requires no changes to order logic (structure review confirms).
 
 **Gates:** `@payments-review` approval required before merge.

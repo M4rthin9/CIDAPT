@@ -26,6 +26,9 @@ const envSchema = z.object({
 
   APP_URL: z.string().url(),
   SITE_URL: z.string().url(),
+
+  RECONCILIATION_PROVIDER: z.string().default('fake'),
+  BILLER_COMP_CODE: z.string().default(''),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -8,6 +8,9 @@ import health from './routes/health';
 import authRoutes from './routes/auth';
 import settings from './routes/settings';
 import upload from './routes/upload';
+import checkout from './routes/checkout';
+import paymentsRoutes from './routes/payments';
+import enquiries from './routes/enquiries';
 
 const env = loadEnv();
 createLogger(env);
@@ -29,6 +32,15 @@ app.route('/api/v1/settings', settings);
 
 // Upload (admin+)
 app.route('/api/v1/upload', upload);
+
+// Checkout (public — creates pending orders)
+app.route('/api/v1/checkout', checkout);
+
+// Payments (initiate public, reconcile webhook, manual-verify superadmin)
+app.route('/api/v1/payments', paymentsRoutes);
+
+// Enquiries (public — enquiry products)
+app.route('/api/v1/enquiries', enquiries);
 
 // Global error handler
 app.onError((err, c) => {

@@ -43,6 +43,9 @@ importers:
       '@cida/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@cida/promptpay':
+        specifier: workspace:*
+        version: link:../../packages/promptpay
       '@cida/storage':
         specifier: workspace:*
         version: link:../../packages/storage
