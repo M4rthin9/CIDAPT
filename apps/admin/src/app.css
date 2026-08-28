@@ -1,0 +1,448 @@
+/* CIDA Craft admin — shared shell styles.
+   Tokens mirror the storefront palette so admin previews read true to the site. */
+
+:root {
+  --paper: #ffffff;
+  --mist: #f1f0ed;
+  --line: #e2e0db;
+  --ink: #121213;
+  --slate: #6b6b70;
+  --marigold: #d99000;
+  --danger: #b3261e;
+  --ok: #1f7a4d;
+
+  --font-body: 'Anuphan', 'Inter', system-ui, sans-serif;
+  --font-display: 'Inter', 'Anuphan', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  /* Thai bodies need a larger floor than Latin to stay legible (P8 a11y gate). */
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--mist);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5rem;
+  line-height: 1.3;
+}
+
+a {
+  color: inherit;
+}
+
+/* ---------------- Screen scaffold ---------------- */
+
+.screen {
+  padding: var(--space-lg);
+  max-width: 1200px;
+}
+
+.screen-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.screen-head p {
+  color: var(--slate);
+  margin: 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+/* ---------------- Banners ---------------- */
+
+.banner {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: var(--space-md);
+  font-size: 0.9375rem;
+}
+
+.banner-error {
+  background: rgba(179, 38, 30, 0.06);
+  border-left: 3px solid var(--danger);
+  color: var(--danger);
+}
+
+.banner-ok {
+  background: rgba(31, 122, 77, 0.07);
+  border-left: 3px solid var(--ok);
+  color: var(--ok);
+}
+
+.muted {
+  color: var(--slate);
+}
+
+/* ---------------- Tables ---------------- */
+
+.table-wrap {
+  overflow-x: auto;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.625rem 0.875rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+th {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--slate);
+  white-space: nowrap;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+td.num,
+th.num {
+  text-align: right;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+/* ---------------- Buttons ---------------- */
+
+button {
+  font: inherit;
+}
+
+.btn {
+  padding: 0.4375rem 0.875rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--slate);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+  font-weight: 600;
+}
+
+.btn-danger {
+  color: var(--danger);
+  border-color: rgba(179, 38, 30, 0.4);
+}
+
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--marigold);
+  outline-offset: 1px;
+}
+
+/* ---------------- Forms ---------------- */
+
+.field {
+  display: block;
+  margin-bottom: 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.field input,
+.field select,
+.field textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.9375rem;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.field textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0 var(--space-md);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.875rem;
+}
+
+.check input {
+  width: auto;
+  margin: 0;
+}
+
+/* ---------------- Bilingual pair ---------------- */
+
+.bilingual {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0 var(--space-md);
+  border-left: 2px solid var(--line);
+  padding-left: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.bilingual-legend {
+  grid-column: 1 / -1;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--slate);
+  margin-bottom: 0.25rem;
+}
+
+.lang-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--slate);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 0.25rem;
+  margin-right: 0.375rem;
+}
+
+/* ---------------- Badges ---------------- */
+
+.badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.badge-published,
+.badge-paid,
+.badge-completed,
+.badge-converted {
+  background: rgba(31, 122, 77, 0.1);
+  border-color: transparent;
+  color: var(--ok);
+}
+
+.badge-draft,
+.badge-new,
+.badge-pending_payment {
+  background: rgba(217, 144, 0, 0.12);
+  border-color: transparent;
+  color: #8a5c00;
+}
+
+.badge-archived,
+.badge-cancelled,
+.badge-closed {
+  background: rgba(107, 107, 112, 0.12);
+  border-color: transparent;
+  color: var(--slate);
+}
+
+/* ---------------- Modal ---------------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 18, 19, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-lg);
+  overflow-y: auto;
+  z-index: 50;
+}
+
+.modal {
+  background: var(--paper);
+  border-radius: 12px;
+  padding: var(--space-lg);
+  width: 100%;
+  max-width: 640px;
+  margin: auto;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+/* ---------------- Shell ---------------- */
+
+.shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: var(--ink);
+  color: #fff;
+  padding: var(--space-lg) var(--space-md);
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--space-lg);
+}
+
+.brand-mark {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.25rem;
+  letter-spacing: 0.05em;
+}
+
+.brand-sub {
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.nav-list a {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-size: 0.9375rem;
+}
+
+.nav-list a:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.nav-list a.active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-weight: 600;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  padding: 0.75rem var(--space-lg);
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+.role-tag {
+  font-size: 0.875rem;
+  color: var(--slate);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.boot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: var(--slate);
+}
+
+@media (max-width: 720px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    padding: var(--space-md);
+  }
+
+  .nav-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

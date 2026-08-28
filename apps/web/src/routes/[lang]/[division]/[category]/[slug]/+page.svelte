@@ -7,6 +7,9 @@
   const lang = $derived(data.lang);
   const isEnquiry = $derived(product?.purchaseMode === 'enquiry');
   const isFloral = $derived(data.division === 'florals');
+  const reveal = $derived(isFloral ? '' : 'reveal');
+  const reveal1 = $derived(isFloral ? '' : 'reveal reveal-delay-1');
+  const reveal2 = $derived(isFloral ? '' : 'reveal reveal-delay-2');
 
   let quantity = $state(1);
   let cartMessage = $state('');
@@ -113,24 +116,24 @@
 
       <div class="pdp-grid">
         <!-- Product Image -->
-        <div class="pdp-image reveal">
+        <div class="pdp-image {reveal}">
           <div class="pdp-img-placeholder"></div>
         </div>
 
         <!-- Product Info -->
         <div class="pdp-info">
-          <h1 class="pdp-title reveal">{lang === 'th' ? product.name_th : product.name_en}</h1>
+          <h1 class="pdp-title {reveal}">{lang === 'th' ? product.name_th : product.name_en}</h1>
 
-          <p class="pdp-price reveal reveal-delay-1">
+          <p class="pdp-price {reveal1}">
             <span class="price-mono">{product.priceFormatted}</span>
           </p>
 
-          <p class="pdp-desc reveal reveal-delay-1">
+          <p class="pdp-desc {reveal1}">
             {lang === 'th' ? product.description_th : product.description_en}
           </p>
 
           <!-- Workshop Plate -->
-          <div class="workshop-plate reveal reveal-delay-2">
+          <div class="workshop-plate {reveal2}">
             <div class="plate-row">
               <span class="plate-label">{lang === 'th' ? 'กองงาน' : 'Workshop'}</span>
               <span class="plate-value">{divisionName}</span>
@@ -157,7 +160,7 @@
 
           {#if isEnquiry}
             <!-- Enquiry Form for Florals -->
-            <div class="enquiry-section reveal reveal-delay-2">
+            <div class="enquiry-section {reveal2}">
               <p class="enquiry-note">
                 {lang === 'th'
                   ? 'ติดต่อเจ้าหน้าที่เพื่อสั่งซื้อ'
@@ -236,7 +239,7 @@
             </div>
           {:else}
             <!-- Cart: Add to Cart -->
-            <div class="cart-section reveal reveal-delay-2">
+            <div class="cart-section {reveal2}">
               <div class="quantity-row">
                 <label for="qty" class="visually-hidden"
                   >{lang === 'th' ? 'จำนวน' : 'Quantity'}</label
@@ -341,7 +344,7 @@
     border-radius: 8px;
     padding: var(--space-lg);
     margin-bottom: var(--space-xl);
-    font-family: var(--font-mono);
+    font-family: var(--font-mono), 'Anuphan', sans-serif;
     font-size: 0.875rem;
   }
 

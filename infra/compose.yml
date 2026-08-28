@@ -90,6 +90,9 @@ services:
       - caddy_data:/data
       - caddy_config:/config
       - admin_static:/srv/admin
+    depends_on:
+      admin:
+        condition: service_completed_successfully
     healthcheck:
       <<: *health_defaults
       start_period: 5s
@@ -126,6 +129,19 @@ services:
       <<: *health_defaults
       start_period: 10s
       test: ['CMD-SHELL', 'node -e "process.exit(0)"']
+    logging: *logging
+
+  # One-shot: builds the admin SPA into the volume Caddy serves at /admin, then
+  # exits. `restart: no` keeps compose from treating the clean exit as a crash.
+  admin:
+    build:
+      context: ..
+      dockerfile: apps/admin/Dockerfile
+    environment:
+      TZ: UTC
+    restart: 'no'
+    volumes:
+      - admin_static:/srv/admin
     logging: *logging
 
   worker:

@@ -32,19 +32,19 @@ every phase by reference.
 
 ## Phase status overview
 
-| Phase | Name                   | Status      |
-| ----- | ---------------------- | ----------- |
-| P0    | Repo foundation        | done        |
-| P1    | Infra skeleton         | done        |
-| P2    | Data model             | done        |
-| P3    | Pure packages          | done        |
-| P4    | API core               | done        |
-| P5    | Orders & payments      | done        |
-| P6    | Tax & finance          | done        |
-| P7    | Worker & notifications | done        |
-| P8    | Storefront             | in-progress |
-| P9    | Admin SPA              | pending     |
-| P10   | Ops hardening & launch | pending     |
+| Phase | Name                   | Status  |
+| ----- | ---------------------- | ------- |
+| P0    | Repo foundation        | done    |
+| P1    | Infra skeleton         | done    |
+| P2    | Data model             | done    |
+| P3    | Pure packages          | done    |
+| P4    | API core               | done    |
+| P5    | Orders & payments      | done    |
+| P6    | Tax & finance          | done    |
+| P7    | Worker & notifications | done    |
+| P8    | Storefront             | done    |
+| P9    | Admin SPA              | pending |
+| P10   | Ops hardening & launch | pending |
 
 ---
 
@@ -273,7 +273,11 @@ green against a live API + seeded catalogue):
   Pre-existing, P5 territory.
 
 **Gates:** `@bilingual-review` on publishable UI/content; `@schema-review` on migration `0001`
-— **not yet run**.
+— **passed**. Both reviews run; the two bilingual failures found were fixed (Thai body font-size
+floor ≥15px in `app.css`; floral/funeral PDP suppressed the unused-scroll-reveal motion and the
+workshop-plate font stack gained an Anuphan fallback for Thai glyphs). SCHEMA-review flagged two
+non-blocking risks for P10 (cross-language slug collision; `lower(sku)` backfill aborting on
+legacy SKUs) — see PLAN review notes.
 
 ---
 
@@ -290,12 +294,63 @@ green against a live API + seeded catalogue):
 
 **Acceptance criteria**
 
-- [ ] Every mutating action writes an audit_log row (tested).
-- [ ] Publish blocked when either language empty (API-level test).
-- [ ] Role matrix re-run against admin endpoints.
-- [ ] Svelte 5 runes only — no legacy `export let` / `$:`.
+- [x] Every mutating action writes an audit_log row (tested).
+- [x] Publish blocked when either language empty (API-level test).
+- [x] Role matrix re-run against admin endpoints.
+- [x] Svelte 5 runes only — no legacy `export let` / `$:`.
 
-**Gates:** `@bilingual-review`.
+**Gates:** `@bilingual-review` — **pending**. The both-languages publish gate is
+enforced server-side and covered by tests, but a reviewer has not yet read the Thai
+copy across the ten admin screens.
+
+**What shipped**
+
+- `apps/admin`: Svelte 5 runes SPA (hash router, no SvelteKit) with ten screens —
+  dashboard, orders, inventory, enquiries, products, coupons, content, settings,
+  users, audit. Shared `Screen`/`Modal`/`BilingualPair` primitives; `$lib/i18n.svelte.ts`
+  holds one app-wide TH/EN store so the topbar toggle drives every screen.
+- API admin surface mounted under `/api/v1/admin/*`: catalog, content, coupons,
+  inventory, orders, enquiries, users, audit, summary. Each router sets its own
+  `requireMinRole` floor — officer for the operations screens, admin for authoring,
+  superadmin for settings/users/audit.
+- New endpoints written this phase: `GET /admin/catalog/products/:id` (the list
+  projection is too thin to edit from), the enquiry inbox (`enquiries-admin.ts`),
+  and `GET /admin/summary` for the dashboard counters.
+- `infra`: an `admin` one-shot service builds the SPA into the `admin_static`
+  volume Caddy already served from — that volume had no producer before. Caddy now
+  waits on `service_completed_successfully`, and Vite emits `base: '/admin/'` so
+  assets do not fall through to the storefront.
+- `apps/api/src/tests/p9.test.ts` — 49 tests over the three acceptance gates, with
+  auth/audit/db mocked so the suite stays a unit test.
+
+**Fixed en route**
+
+- `catalog-admin.ts` had a duplicated `const [existing]` block — a syntax error, so
+  the file had never compiled.
+- The seven admin routers existed but were never mounted in `index.ts`; the whole
+  admin surface was unreachable.
+- `auth.ts` / `router.ts` used runes in plain `.ts` files (renamed to `.svelte.ts`),
+  and `api.ts` called an unimported `clearSession` — now shared via `lib/storage.ts`.
+- `App.svelte` imported nine components that did not exist and reassigned a `const`
+  `lang`; the SPA could not build at all.
+- Added `mustRow` in `errors.ts` for the eight `.returning()` destructures that
+  tripped `noUncheckedIndexedAccess`.
+- Products sent `lotCode: null`, which `productCore` rejects — it is a required
+  `/^[A-Z0-9-]{1,24}$/` field, now marked required in the editor.
+
+**Known gaps / carried to P10**
+
+- Image upload is not wired into the product and content editors: `heroImageKey`
+  and banner `imageKey` are typed by hand against `/api/v1/upload`. P10 territory.
+- "Reports" and "data export" in the scope above landed only as the audit CSV
+  export; no sales/finance reporting screen exists yet.
+- Manual payment verification is still API-only (`/payments`), with no admin UI.
+- Two pre-existing gate breaks fixed to get `pnpm -r` green: `apps/web/vite.config.ts`
+  importing `vitest/config` pulled Vite 7 types that clash with the Vite 6 types
+  SvelteKit's plugin is built against (test config moved to `apps/web/vitest.config.ts`),
+  and `apps/worker` had no test files but lacked `--passWithNoTests`.
+- `packages/db/tests/payments-idempotency.test.ts` still fails on `main` — unchanged
+  from P8, still P5 territory.
 
 ---
 
