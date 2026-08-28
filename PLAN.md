@@ -408,7 +408,10 @@ the payment option server-side and hands the storefront the QR / account details
   `BANK_NAME`, `BANK_ACCOUNT_NAME`, `BANK_ACCOUNT_NO` (empty disables that rail).
 - **Regression tests:** `apps/api/src/tests/p10-payments-rail.test.ts` (11 tests) — rail precedence
   (billpay→ewallet→bank, billpay dominance), `accountDetails`, and `buildRailPayload` including the
-  merchant-target tag-29 regression. Full API suite still green (139 tests).
+  merchant-target tag-29 regression. `apps/api/src/tests/p10-checkout-payment.test.ts` (2 tests)
+  drives the **real checkout route** through `createPayment` (DB + audit path): returns
+  `rail` + `payment` with the tag-29 QR, and writes a `payment.initiate` audit row. Full API suite
+  still green (141 tests).
 
 **Acceptance criteria**
 
