@@ -11,10 +11,10 @@ import {
   reconciliationEventSchema,
   manualVerifySchema,
 } from '@cida/contracts';
-import { buildBillPaymentQr, buildTransferProxyQr } from '@cida/promptpay';
 import { getEnv } from '../config';
 import type { ReconciliationProvider } from '../lib/reconciliation';
 import { FakeReconciliationProvider } from '../lib/reconciliation';
+import { createPayment } from '../lib/payments';
 
 const paymentsRoutes = new Hono();
 
@@ -50,79 +50,7 @@ paymentsRoutes.post('/initiate', async (c) => {
   }
 
   const { orderId, rail, amountSatang } = parsed.data;
-
-  const [order] = await db.instance.select().from(orders).where(eq(orders.id, orderId)).limit(1);
-
-  if (!order) {
-    throw new AppError('order_not_found', 'ไม่พบคำสั่งซื้อ', 'Order not found', 404);
-  }
-
-  if (order.status !== 'pending_payment') {
-    throw new AppError(
-      'order_not_payable',
-      'คำสั่งซื้อไม่อยู่ในสถานะรอชำระ',
-      'Order is not in pending_payment status',
-      400,
-    );
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-
-  const [payment] = await db.instance
-    .insert(payments)
-    .values({
-      orderId,
-      rail,
-      status: 'pending',
-      amountSatang,
-      initiatedAt: now,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .returning();
-
-  if (!payment) {
-    throw new AppError(
-      'payment_failed',
-      'สร้างรายการชำระไม่สำเร็จ',
-      'Failed to create payment',
-      500,
-    );
-  }
-
-  let qrPayload: string | undefined;
-  const env = getEnv();
-
-  if (rail === 'promptpay_billpay' && env.BILLER_COMP_CODE) {
-    qrPayload = buildBillPaymentQr({
-      ref1: order.orderNo,
-      amountSatang,
-    });
-  } else if (rail === 'promptpay_ewallet') {
-    qrPayload = buildTransferProxyQr({
-      targetType: 'phone',
-      target: order.phone,
-      amountSatang,
-    });
-  }
-
-  await writeAuditLog(c, {
-    action: 'payment.initiate',
-    entityType: 'payment',
-    entityId: payment.id,
-    afterState: { orderId, rail, amountSatang },
-  });
-
-  return c.json({
-    data: {
-      paymentId: payment.id,
-      orderId,
-      rail,
-      amountSatang,
-      status: payment.status,
-      qrPayload,
-    },
-  });
+  return c.json({ data: await createPayment(c, { orderId, rail, amountSatang }) });
 });
 
 paymentsRoutes.post('/reconcile', async (c) => {

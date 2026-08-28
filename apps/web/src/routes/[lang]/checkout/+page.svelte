@@ -1,7 +1,19 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import QRCode from 'qrcode';
+  import { formatTHB } from '@cida/money';
 
   let { data }: { data: PageData } = $props();
+
+  type PaymentResult = {
+    paymentId: string;
+    orderId: string;
+    rail: string;
+    amountSatang: number;
+    status: string;
+    qrPayload?: string;
+    accountDetails?: { bank: string; accountName: string; accountNo: string };
+  };
 
   let contactName = $state('');
   let contactPhone = $state('');
@@ -21,7 +33,29 @@
     orderNo: string;
     totalSatang: number;
     status: string;
+    rail: string;
+    payment: PaymentResult;
   } | null>(null);
+
+  let qrDataUrl = $state<string | null>(null);
+  $effect(() => {
+    const payload = orderResult?.payment?.qrPayload;
+    if (!payload) {
+      qrDataUrl = null;
+      return;
+    }
+    let cancelled = false;
+    QRCode.toDataURL(payload, { width: 248, margin: 2 })
+      .then((url) => {
+        if (!cancelled) qrDataUrl = url;
+      })
+      .catch(() => {
+        if (!cancelled) qrDataUrl = null;
+      });
+    return () => {
+      cancelled = true;
+    };
+  });
 
   const items = $derived(data.items ?? []);
   const l = $derived(data.lang === 'th' ? 'th' : 'en');
@@ -49,6 +83,12 @@
           successTitle: 'สั่งซื้อสำเร็จ',
           orderNo: 'เลขที่คำสั่งซื้อ',
           payCta: 'ชำระเงิน',
+          payNow: 'ชำระเงินทันที',
+          payPlease: 'กรุณาชำระเงินภายในเวลาที่กำหนดเพื่อยืนยันคำสั่งซื้อ',
+          payBillPay: 'ชำระผ่าน Bill Payment PromptPay',
+          payPromptpay: 'ชำระผ่าน PromptPay',
+          payBank: 'ชำระผ่านการโอนเงิน',
+          accountDetails: 'เลขที่บัญชี',
           errorGeneric: 'เกิดข้อผิดพลาด กรุณาลองใหม่',
           backToCart: 'กลับไปตะกร้า',
           goShopping: 'เลือกชมสินค้า',
@@ -75,6 +115,12 @@
           successTitle: 'Order placed',
           orderNo: 'Order No.',
           payCta: 'Pay now',
+          payNow: 'Pay now',
+          payPlease: 'Please pay within the required time to confirm your order',
+          payBillPay: 'Pay by PromptPay Bill Payment',
+          payPromptpay: 'Pay by PromptPay',
+          payBank: 'Pay by bank transfer',
+          accountDetails: 'Account details',
           errorGeneric: 'An error occurred. Please try again.',
           backToCart: 'Back to cart',
           goShopping: 'Continue shopping',
@@ -136,11 +182,37 @@
       <div class="checkout-success reveal">
         <h1>{t.successTitle}</h1>
         <p class="success-order-no mono">{orderResult.orderNo}</p>
-        <p class="success-note">
-          {l === 'th'
-            ? 'กรุณาชำระเงินภายในเวลาที่กำหนดเพื่อยืนยันคำสั่งซื้อ'
-            : 'Please pay within the required time to confirm your order'}
-        </p>
+        <p class="success-note">{t.payPlease}</p>
+
+        {#if qrDataUrl}
+          <div class="pay-step">
+            <p class="pay-title">
+              {orderResult.payment?.rail === 'promptpay_billpay' ? t.payBillPay : t.payPromptpay}
+            </p>
+            <img src={qrDataUrl} alt="" width="248" height="248" class="pay-qr" />
+            <p class="pay-amount mono">{formatTHB(orderResult.totalSatang)}</p>
+            <a class="btn-primary" href="#pay">{t.payNow}</a>
+          </div>
+        {:else if orderResult.payment?.accountDetails}
+          <div class="pay-step">
+            <p class="pay-title">{t.payBank}</p>
+            <dl class="pay-account">
+              <div>
+                <dt>{t.accountDetails}</dt>
+                <dd class="mono">{orderResult.payment.accountDetails.accountNo}</dd>
+              </div>
+              <div>
+                <dt></dt>
+                <dd>{orderResult.payment.accountDetails.accountName}</dd>
+              </div>
+              <div>
+                <dt></dt>
+                <dd>{orderResult.payment.accountDetails.bank}</dd>
+              </div>
+            </dl>
+            <p class="pay-amount mono">{formatTHB(orderResult.totalSatang)}</p>
+          </div>
+        {/if}
       </div>
     {:else}
       <h1 class="checkout-title">{t.title}</h1>
@@ -369,5 +441,41 @@
 
   .mono {
     font-family: var(--font-mono);
+  }
+
+  .pay-step {
+    margin-top: var(--space-2xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .pay-title {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .pay-qr {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: var(--space-sm);
+  }
+
+  .pay-amount {
+    font-size: 1.25rem;
+    color: var(--ink);
+  }
+
+  .pay-step .btn-primary {
+    max-width: 280px;
+  }
+
+  .pay-account {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    font-size: 0.95rem;
+    line-height: 1.75;
   }
 </style>

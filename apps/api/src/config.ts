@@ -26,7 +26,15 @@ const envSchema = z.object({
   SITE_URL: z.string().url(),
 
   RECONCILIATION_PROVIDER: z.string().default('fake'),
+
+  // Payments — backend-selected rail (Bill Pay → PromptPay transfer → bank transfer).
   BILLER_COMP_CODE: z.string().default(''),
+  // Merchant PromptPay proxy (Thai mobile number) for the eWallet/transfer rail (tag-29).
+  PROMPTPAY_NUMBER: z.string().default(''),
+  // Bank transfer rail display details (no QR — shown when biller/ProxyPay are unset).
+  BANK_NAME: z.string().default(''),
+  BANK_ACCOUNT_NAME: z.string().default(''),
+  BANK_ACCOUNT_NO: z.string().default(''),
 });
 
 export type Env = z.infer<typeof envSchema>;

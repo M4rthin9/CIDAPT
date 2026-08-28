@@ -7,6 +7,8 @@ import { writeAuditLog } from '../middleware/audit';
 import { AppError } from '../errors';
 import { checkoutSchema } from '@cida/contracts';
 import { nextOrderNo } from '../lib/order-no';
+import { getEnv } from '../config';
+import { createPayment, selectPaymentRail } from '../lib/payments';
 
 const checkout = new Hono();
 
@@ -137,12 +139,23 @@ checkout.post('/', async (c) => {
     afterState: { orderNo, totalSatang, itemCount: items.length },
   });
 
+  // Backend selects the payment rail for the buyer (never a client choice) and
+  // opens a pending payment, returning the QR / account details to display.
+  const rail = selectPaymentRail(getEnv());
+  const payment = await createPayment(c, {
+    orderId: order.id,
+    rail,
+    amountSatang: order.totalSatang,
+  });
+
   return c.json({
     data: {
       orderId: order.id,
       orderNo: order.orderNo,
       totalSatang: order.totalSatang,
       status: order.status,
+      rail,
+      payment,
     },
   });
 });

@@ -385,6 +385,31 @@ null` (schema source `packages/db/src/payments.ts` updated to match).
   list reachability. Verified green alongside the full repo (lint + prettier, `-r typecheck` 0
   errors, 116 existing API tests + 12 new).
 
+**P10 carried gap — backend-selected payment rail (this session)**
+
+Per the user's money-path clarification, the buyer **never chooses a rail**: the backend resolves
+the payment option server-side and hands the storefront the QR / account details to display.
+
+- **`apps/api/src/lib/payments.ts` (new):** `selectPaymentRail(env)` resolves precedence
+  **Bill Pay (tag-30, if `BILLER_COMP_CODE`) → PromptPay transfer (tag-29, if `PROMPTPAY_NUMBER`)
+  → bank transfer (`BANK_*`)**; `accountDetails(env)`; `buildRailPayload(env, order, rail)` returns
+  `{ qrPayload?, accountDetails? }`; `createPayment(c, {orderId, rail, amountSatang})` validates the
+  order is `pending_payment`, inserts the `payments` row, writes `payment.initiate` audit, returns
+  the payment with its QR / account details.
+- **`/api/v1/payments/initiate` refactored** to the shared `createPayment`. This also **fixes a
+  latent tag-29 bug**: the eWallet transfer QR previously targeted `order.phone` (the buyer's
+  number); it now targets the merchant `PROMPTPAY_NUMBER`.
+- **`/api/v1/checkout` auto-selects the rail and auto-initiates** a pending payment after order
+  creation, returning `rail` + `payment` in the response. No client rail choice.
+- **Storefront checkout success step** renders the backend-selected payment: a QR image
+  (`qrcode` dep in `apps/web`, SVG/data-URL from `payment.qrPayload`) when a QR rail is configured,
+  else the `BANK_*` transfer details. Amount shown via `formatTHB()` (`@cida/money`).
+- **New env keys** in `apps/api/src/config.ts` + `.env.example`: `PROMPTPAY_NUMBER`,
+  `BANK_NAME`, `BANK_ACCOUNT_NAME`, `BANK_ACCOUNT_NO` (empty disables that rail).
+- **Regression tests:** `apps/api/src/tests/p10-payments-rail.test.ts` (11 tests) — rail precedence
+  (billpay→ewallet→bank, billpay dominance), `accountDetails`, and `buildRailPayload` including the
+  merchant-target tag-29 regression. Full API suite still green (139 tests).
+
 **Acceptance criteria**
 
 - [x] Image upload + reports + manual-verify admin UIs shipped and verifying green.
