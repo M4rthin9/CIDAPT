@@ -102,6 +102,29 @@ button {
   line-height: 1.75;
 }
 
+/* Thai body text never below 15px: a hard floor that wins over any component
+   font-size (Svelte-scoped rules otherwise have higher specificity). */
+[lang='th']
+  :where(
+    .nav-link,
+    .nav-lang,
+    .breadcrumb,
+    .form-group label,
+    .field-label,
+    .plate-label,
+    .footer-text,
+    .footer-copy,
+    .cart-item-meta,
+    .cart-summary-row,
+    label,
+    p,
+    span,
+    li,
+    small
+  ) {
+  font-size: max(0.9375rem, 1em) !important;
+}
+
 /* Never uppercase Thai */
 [lang='th'] * {
   text-transform: none;
