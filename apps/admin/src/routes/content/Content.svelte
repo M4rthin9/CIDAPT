@@ -12,6 +12,7 @@
   import Screen from '$lib/ui/Screen.svelte';
   import Modal from '$lib/ui/Modal.svelte';
   import BilingualPair from '$lib/ui/BilingualPair.svelte';
+  import ImagePicker from '$lib/ui/ImagePicker.svelte';
 
   type Tab = 'pages' | 'news' | 'events' | 'banners';
 
@@ -712,6 +713,11 @@
       bind:en={newsDraft.excerptEn}
       multiline
     />
+    <ImagePicker
+      label={t('รูปภาพประกอบข่าว', 'News hero image')}
+      value={newsDraft.heroImageKey}
+      onchange={(k) => (newsDraft!.heroImageKey = k)}
+    />
     <BilingualPair
       legend={t('เนื้อหา', 'Body')}
       bind:th={newsDraft.bodyTh}
@@ -759,6 +765,11 @@
       multiline
       requiredToPublish
     />
+    <ImagePicker
+      label={t('รูปภาพประกอบกิจกรรม', 'Event image')}
+      value={eventDraft.heroImageKey}
+      onchange={(k) => (eventDraft!.heroImageKey = k)}
+    />
     <BilingualPair
       legend={t('สถานที่', 'Location')}
       bind:th={eventDraft.locationTh}
@@ -783,10 +794,6 @@
         </select>
       </label>
       <label class="field">
-        {t('คีย์รูปภาพ', 'Image key')}
-        <input type="text" bind:value={bannerDraft.imageKey} />
-      </label>
-      <label class="field">
         {t('ลำดับ', 'Sort order')}
         <input type="number" min="0" step="1" bind:value={bannerDraft.sortOrder} />
       </label>
@@ -799,6 +806,11 @@
         <input type="datetime-local" bind:value={bannerDraft.endsAtInput} />
       </label>
     </div>
+    <ImagePicker
+      label={t('รูปภาพแบนเนอร์', 'Banner image')}
+      value={bannerDraft.imageKey}
+      onchange={(k) => (bannerDraft!.imageKey = k)}
+    />
     <BilingualPair
       legend={t('คำอธิบายภาพ (จำเป็น)', 'Alt text (required)')}
       bind:th={bannerDraft.altTh}

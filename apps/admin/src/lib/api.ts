@@ -65,3 +65,45 @@ export async function api<T = unknown>(
 
   throw new ApiRequestError(res.status, body);
 }
+
+/** Shape returned by `POST /api/v1/upload`. */
+export interface UploadResult {
+  key: string;
+  originalName: string;
+  contentType: string;
+  size: number;
+  variants: Array<{ width: number; key: string }>;
+}
+
+/**
+ * Upload an image to `POST /api/v1/upload`. Unlike `api()` this sends
+ * `multipart/form-data` (no JSON Content-Type) and returns the storage key.
+ */
+export async function uploadImage(file: File): Promise<UploadResult> {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch('/api/v1/upload', {
+    method: 'POST',
+    body: form,
+    credentials: 'same-origin',
+  });
+
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: ApiError } | null;
+    if (res.status === 401) {
+      clearSession();
+      const target = window.location.hash.replace(/^#/, '');
+      window.location.hash = target ? `#/login?next=${encodeURIComponent(target)}` : '#/login';
+    }
+    throw new ApiRequestError(res.status, body);
+  }
+
+  const json = (await res.json()) as { data?: UploadResult };
+  return (json.data ?? {
+    key: '',
+    originalName: '',
+    contentType: '',
+    size: 0,
+    variants: [],
+  }) as UploadResult;
+}

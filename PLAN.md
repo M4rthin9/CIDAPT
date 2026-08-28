@@ -32,19 +32,19 @@ every phase by reference.
 
 ## Phase status overview
 
-| Phase | Name                   | Status  |
-| ----- | ---------------------- | ------- |
-| P0    | Repo foundation        | done    |
-| P1    | Infra skeleton         | done    |
-| P2    | Data model             | done    |
-| P3    | Pure packages          | done    |
-| P4    | API core               | done    |
-| P5    | Orders & payments      | done    |
-| P6    | Tax & finance          | done    |
-| P7    | Worker & notifications | done    |
-| P8    | Storefront             | done    |
-| P9    | Admin SPA              | pending |
-| P10   | Ops hardening & launch | pending |
+| Phase | Name                   | Status      |
+| ----- | ---------------------- | ----------- |
+| P0    | Repo foundation        | done        |
+| P1    | Infra skeleton         | done        |
+| P2    | Data model             | done        |
+| P3    | Pure packages          | done        |
+| P4    | API core               | done        |
+| P5    | Orders & payments      | done        |
+| P6    | Tax & finance          | done        |
+| P7    | Worker & notifications | done        |
+| P8    | Storefront             | done        |
+| P9    | Admin SPA              | done        |
+| P10   | Ops hardening & launch | in-progress |
 
 ---
 
@@ -268,16 +268,12 @@ green against a live API + seeded catalogue):
 
 - `infra/compose.yml` has no `api` service and `apps/api` has no Dockerfile, although the Caddyfile
   proxies `/api/*` to `api:3000`. Deploying the storefront needs this closed — P10.
-- `packages/db/tests/payments-idempotency.test.ts` fails on `main` (the
-  `payments_verified_has_trans_ref` check does not reject a bare `status = 'verified'` update).
-  Pre-existing, P5 territory.
-
-**Gates:** `@bilingual-review` on publishable UI/content; `@schema-review` on migration `0001`
-— **passed**. Both reviews run; the two bilingual failures found were fixed (Thai body font-size
-floor ≥15px in `app.css`; floral/funeral PDP suppressed the unused-scroll-reveal motion and the
-workshop-plate font stack gained an Anuphan fallback for Thai glyphs). SCHEMA-review flagged two
-non-blocking risks for P10 (cross-language slug collision; `lower(sku)` backfill aborting on
-legacy SKUs) — see PLAN review notes.
+  **Gates:** `@bilingual-review` on publishable UI/content; `@schema-review` on migration `0001`
+  — **passed**. Both reviews run; the two bilingual failures found were fixed (Thai body font-size
+  floor ≥15px in `app.css`; floral/funeral PDP suppressed the unused-scroll-reveal motion and the
+  workshop-plate font stack gained an Anuphan fallback for Thai glyphs). SCHEMA-review flagged two
+  non-blocking risks for P10 (cross-language slug collision; `lower(sku)` backfill aborting on
+  legacy SKUs) — see PLAN review notes.
 
 ---
 
@@ -349,8 +345,11 @@ copy across the ten admin screens.
   importing `vitest/config` pulled Vite 7 types that clash with the Vite 6 types
   SvelteKit's plugin is built against (test config moved to `apps/web/vitest.config.ts`),
   and `apps/worker` had no test files but lacked `--passWithNoTests`.
-- `packages/db/tests/payments-idempotency.test.ts` still fails on `main` — unchanged
-  from P8, still P5 territory.
+- The pre-existing `packages/db/tests/payments-idempotency.test.ts` failure was fixed: the
+  `payments_verified_has_trans_ref` CHECK compared `verified_via = 'manual_override'`, which
+  evaluates to UNKNOWN (NULL) against a NULL `verified_via` and thus satisfied the CHECK, letting a
+  bare `status = 'verified'` update through. Migrations `0002` corrects it to `verified_via is not
+null` (schema source `packages/db/src/payments.ts` updated to match).
 
 ---
 
@@ -366,11 +365,33 @@ copy across the ten admin screens.
 - Final reconciliation Playwright suite against Fake→real provider swap checklist.
 - Restore drill documentation + go-live checklist.
 
+**P9 carried gaps — closed this session**
+
+- **Image upload wired into admin editors.** New `GET /api/v1/admin/media/:key` preview proxy
+  (`apps/api/src/routes/media.ts`, admin+, streams the S3 object with `Cache-Control: private`),
+  `uploadImage()` helper + `UploadResult` in the admin API lib, reusable `ImagePicker.svelte`
+  (preview / upload / remove, i18n strings). Wired into news hero, event hero, and banner image in
+  `Content.svelte`, replacing the hand-typed image-key fields.
+- **Reports / data-export admin screen.** `GET /api/v1/admin/reports/summary?from=&to=` (officer+,
+  grouped by status: `count` + `coalesce(sum(totalSatang),0)` — factual, VAT-inclusive, no invented
+  revenue classification) and `GET /api/v1/admin/reports/orders.csv` (CSV download). Mounted at
+  `/reports` with `Reports.svelte` (status→count→gross table, date-range inputs, CSV link).
+- **Manual payment verification admin UI.** `GET /api/v1/admin/payments?status=` (superadmin, joins
+  order `orderNo`, ordered by `initiatedAt` DESC). Mounted at `/payments` with `Payments.svelte`
+  (status filter, verify modal requiring a ≥15-char typed reason → `POST /payments/manual-verify`,
+  red-audit warning). Superadmin-only per finance rules.
+- **Regression suite:** `apps/api/src/tests/p10-admin.test.ts` (12 tests) — role matrix on the new
+  endpoints (`/reports*` floor officer, `/payments` floor superadmin), summary/CSV shape, payments
+  list reachability. Verified green alongside the full repo (lint + prettier, `-r typecheck` 0
+  errors, 116 existing API tests + 12 new).
+
 **Acceptance criteria**
 
+- [x] Image upload + reports + manual-verify admin UIs shipped and verifying green.
 - [ ] Wiped-VPS + repo + `.env` + latest backup fully reconstitutes the system (rehearsed, documented).
 - [ ] No host dependencies beyond Docker on the VPS.
 - [ ] Resource limits present on every prod service; healthchecks gating startup.
 - [ ] Go-live checklist signed off.
 
-**Gates:** full `@payments-review` + ops review.
+**Gates:** full `@payments-review` + ops review. The manual-verify UI (payment-adjacent) and the
+Publishable-content pickers still need `@payments-review`/`@bilingual-review` passes before merge.

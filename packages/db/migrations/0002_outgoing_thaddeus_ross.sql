@@ -1,0 +1,2 @@
+ALTER TABLE "payments" DROP CONSTRAINT "payments_verified_has_trans_ref";--> statement-breakpoint
+ALTER TABLE "payments" ADD CONSTRAINT "payments_verified_has_trans_ref" CHECK ("payments"."status" <> 'verified' or "payments"."trans_ref" is not null or "payments"."verified_via" is not null);

@@ -14,6 +14,8 @@
   import Settings from './routes/settings/Settings.svelte';
   import Users from './routes/users/Users.svelte';
   import Audit from './routes/audit/Audit.svelte';
+  import Reports from './routes/reports/Reports.svelte';
+  import Payments from './routes/payments/Payments.svelte';
   import NotFound from './routes/NotFound.svelte';
 
   const route = $derived(currentRoute());
@@ -29,6 +31,7 @@
   // `min` is the display floor only — each endpoint re-checks the role server-side.
   const nav: NavItem[] = [
     { path: '/dashboard', th: 'แดชบอร์ด', en: 'Dashboard', min: 'officer' },
+    { path: '/reports', th: 'รายงาน', en: 'Reports', min: 'officer' },
     { path: '/orders', th: 'คำสั่งซื้อ', en: 'Orders', min: 'officer' },
     { path: '/inventory', th: 'คลังสินค้า', en: 'Inventory', min: 'officer' },
     { path: '/enquiries', th: 'ใบสอบถาม', en: 'Enquiries', min: 'officer' },
@@ -38,6 +41,7 @@
     { path: '/settings', th: 'ตั้งค่า', en: 'Settings', min: 'superadmin' },
     { path: '/users', th: 'ผู้ใช้', en: 'Users', min: 'superadmin' },
     { path: '/audit', th: 'บันทึกตรวจสอบ', en: 'Audit', min: 'superadmin' },
+    { path: '/payments', th: 'การชำระเงิน', en: 'Payments', min: 'superadmin' },
   ];
 
   const visibleNav = $derived(nav.filter((n) => session.hasRole(n.min)));
@@ -94,6 +98,8 @@
       <main class="content">
         {#if path === '/' || path.startsWith('/dashboard') || path.startsWith('/login')}
           <Dashboard />
+        {:else if path.startsWith('/reports')}
+          <Reports />
         {:else if path.startsWith('/orders')}
           <Orders />
         {:else if path.startsWith('/inventory')}
@@ -112,6 +118,8 @@
           <Users />
         {:else if path.startsWith('/audit')}
           <Audit />
+        {:else if path.startsWith('/payments')}
+          <Payments />
         {:else}
           <NotFound />
         {/if}

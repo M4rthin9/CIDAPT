@@ -46,3 +46,27 @@ services:
   backup:
     restart: *restart
     <<: *limits
+
+  api:
+    restart: *restart
+    deploy:
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 512M
+
+  web:
+    restart: *restart
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+
+  worker:
+    restart: *restart
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M

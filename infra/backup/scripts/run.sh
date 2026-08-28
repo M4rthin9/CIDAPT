@@ -1,4 +1,61 @@
 #!/bin/sh
-# Stub until P10: pg_dump + MinIO mirror + restic offsite.
-echo '{"level":"info","msg":"backup_stub","detail":"not implemented until P10"}'
-exit 0
+# CIDA Craft backup: pg_dump + MinIO mirror + restic offsite.
+# Runs on a schedule from crond. Every step is idempotent and fails loudly,
+# logging JSON-ish lines to stdout (captured by docker logging).
+set -eu
+
+log() {
+  echo "{\"level\":\"${2:-info}\",\"msg\":\"${1}\"}"
+}
+
+TS=$(date -u +%Y%m%dT%H%M%SZ)
+
+# --- 1. Database dump (pg_dump) -----------------------------------------------
+log "backup_db_start"
+if ! PGPASSWORD="$PGPASSWORD" pg_dump \
+    -h "$PGHOST" -p "${PGPORT:-5432}" -U "$PGUSER" -d "$PGDATABASE" \
+    --format=custom --no-owner --no-acl \
+    -f "/backups/db/cida-${TS}.dump"; then
+  log "backup_db_failed" error
+  exit 1
+fi
+# Keep N most recent local dumps; prune the rest.
+find /backups/db -type f -name 'cida-*.dump' -printf '%T@ %p\n' |
+  sort -rn | tail -n +$((KEEP_LOCAL + 1)) | cut -d' ' -f2- | xargs -r rm -f
+log "backup_db_done"
+
+# --- 2. MinIO mirror (media objects) ------------------------------------------
+log "backup_mirror_start"
+if [ -n "${MINIO_ENDPOINT:-}" ]; then
+  if ! mc alias set minio "$MINIO_ENDPOINT" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY" >/dev/null 2>&1; then
+    log "backup_mirror_alias_failed" error
+    exit 1
+  fi
+  if ! mc mirror --overwrite --remove "minio/${MINIO_BUCKET}" /backups/media; then
+    log "backup_mirror_failed" error
+    exit 1
+  fi
+fi
+log "backup_mirror_done"
+
+# --- 3. restic offsite ---------------------------------------------------------
+log "backup_restic_start"
+if [ -n "${RESTIC_REPOSITORY:-}" ]; then
+  export RESTIC_PASSWORD
+  if ! restic -r "$RESTIC_REPOSITORY" backup /backups \
+      --tag "host=$(hostname)" --tag "ts=${TS}"; then
+    log "backup_restic_failed" error
+    exit 1
+  fi
+  # Retention: keep daily for 7, weekly for 4, monthly for 6.
+  restic -r "$RESTIC_REPOSITORY" forget \
+    --keep-daily "${RESTIC_KEEP_DAILY:-7}" \
+    --keep-weekly "${RESTIC_KEEP_WEEKLY:-4}" \
+    --keep-monthly "${RESTIC_KEEP_MONTHLY:-6}" \
+    --prune
+  log "backup_restic_done"
+else
+  log "backup_restic_skipped"
+fi
+
+log "backup_complete"

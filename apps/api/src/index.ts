@@ -2,11 +2,13 @@ import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { cors } from 'hono/cors';
 import { requestIdMiddleware } from './middleware/request-id';
+import { rateLimit } from './middleware/rate-limit';
 import { toErrorResponse, getErrorStatus } from './errors';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { getLogger, createLogger } from './logger';
 import { loadEnv } from './config';
 import { closeDb } from './db';
+import { closeValkey } from './valkey';
 import health from './routes/health';
 import authRoutes from './routes/auth';
 import settings from './routes/settings';
@@ -28,6 +30,9 @@ import adminUserRoutes from './routes/admin-users';
 import auditRoutes from './routes/audit';
 import enquiriesAdmin from './routes/enquiries-admin';
 import adminSummary from './routes/admin-summary';
+import mediaRoutes from './routes/media';
+import reportsRoutes from './routes/reports';
+import paymentsAdmin from './routes/payments-admin';
 
 const env = loadEnv();
 createLogger(env);
@@ -37,6 +42,13 @@ const app = new Hono();
 // Global middleware
 app.use('*', requestIdMiddleware);
 app.use('*', cors({ origin: env.APP_URL, credentials: true }));
+
+// Security: Valkey-backed request rate limiting (P10). Stricter windows on the
+// unauthenticated attack surfaces (auth, enquiries, checkout).
+app.use('/api/v1/*', rateLimit({ max: 300, windowMs: 60_000 }));
+app.use('/api/v1/auth/*', rateLimit({ max: 10, windowMs: 60_000 }));
+app.use('/api/v1/enquiries/*', rateLimit({ max: 20, windowMs: 60_000 }));
+app.use('/api/v1/checkout/*', rateLimit({ max: 30, windowMs: 60_000 }));
 
 // Health
 app.route('/', health);
@@ -101,8 +113,17 @@ app.route('/api/v1/admin/enquiries', enquiriesAdmin);
 // Dashboard counters (officer+)
 app.route('/api/v1/admin/summary', adminSummary);
 
+// Reports — factual order aggregation + CSV export (officer+)
+app.route('/api/v1/admin/reports', reportsRoutes);
+
+// Payments admin — list pending payments for manual verification (superadmin)
+app.route('/api/v1/admin/payments', paymentsAdmin);
+
 // Audit log viewer + CSV export (superadmin only)
 app.route('/api/v1/admin/audit', auditRoutes);
+
+// Media preview proxy — uploaded images for the SPA (admin+)
+app.route('/api/v1/admin/media', mediaRoutes);
 
 // Global error handler
 app.onError((err, c) => {
@@ -142,6 +163,7 @@ async function shutdown(signal: string) {
 
   await new Promise<void>((resolve) => server.close(() => resolve()));
   await closeDb();
+  await closeValkey();
 
   log.info('API shutdown complete');
   process.exit(0);
