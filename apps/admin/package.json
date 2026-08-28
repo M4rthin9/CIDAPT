@@ -5,5 +5,25 @@
   "type": "module",
   "engines": {
     "node": "^22.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json && tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@cida/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@types/node": "^22.10.0",
+    "svelte": "^5.28.2",
+    "svelte-check": "^4.1.7",
+    "typescript": "5.8.3",
+    "vite": "^6.3.4",
+    "vitest": "^3.2.7"
   }
 }

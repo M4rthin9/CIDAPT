@@ -15,6 +15,19 @@ export class AppError extends Error {
   }
 }
 
+/**
+ * Drizzle's `.returning()` is typed as an array, so destructuring the single row
+ * a write produces yields `T | undefined`. A write that reached this point has
+ * already passed its existence checks, so an empty result means the row vanished
+ * under us — surface it as a 500 rather than threading `?.` through audit calls.
+ */
+export function mustRow<T>(row: T | undefined, entity: string): T {
+  if (row === undefined) {
+    throw new AppError('write_failed', 'บันทึกข้อมูลไม่สำเร็จ', `Failed to persist ${entity}`, 500);
+  }
+  return row;
+}
+
 export function toErrorResponse(err: unknown, requestId?: string) {
   const log = getLogger();
 

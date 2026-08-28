@@ -19,6 +19,15 @@ import enquiries from './routes/enquiries';
 import taxInvoicesRoutes from './routes/tax-invoices';
 import creditNotesRoutes from './routes/credit-notes';
 import redirectsRoutes from './routes/redirects';
+import catalogAdmin from './routes/catalog-admin';
+import contentRoutes from './routes/content';
+import couponRoutes from './routes/coupons';
+import inventoryRoutes from './routes/inventory';
+import ordersAdmin from './routes/orders-admin';
+import adminUserRoutes from './routes/admin-users';
+import auditRoutes from './routes/audit';
+import enquiriesAdmin from './routes/enquiries-admin';
+import adminSummary from './routes/admin-summary';
 
 const env = loadEnv();
 createLogger(env);
@@ -64,6 +73,36 @@ app.route('/api/v1/credit-notes', creditNotesRoutes);
 
 // Redirects (slug changes — public lookup, admin create)
 app.route('/api/v1/redirects', redirectsRoutes);
+
+// --- Admin surface (P9). Every route below enforces its own role floor via
+// requireMinRole; the SPA's nav hiding is cosmetic only.
+
+// Catalog authoring (admin+)
+app.route('/api/v1/admin/catalog', catalogAdmin);
+
+// Content authoring — pages/news/events/banners (admin+)
+app.route('/api/v1/admin/content', contentRoutes);
+
+// Coupons (admin+)
+app.route('/api/v1/admin/coupons', couponRoutes);
+
+// Inventory ledger — the sole stock mutation path (officer+)
+app.route('/api/v1/admin/inventory', inventoryRoutes);
+
+// Orders pipeline: packing/shipping (officer+)
+app.route('/api/v1/admin/orders', ordersAdmin);
+
+// Admin users (superadmin only)
+app.route('/api/v1/admin/users', adminUserRoutes);
+
+// Enquiry inbox (officer+)
+app.route('/api/v1/admin/enquiries', enquiriesAdmin);
+
+// Dashboard counters (officer+)
+app.route('/api/v1/admin/summary', adminSummary);
+
+// Audit log viewer + CSV export (superadmin only)
+app.route('/api/v1/admin/audit', auditRoutes);
 
 // Global error handler
 app.onError((err, c) => {
