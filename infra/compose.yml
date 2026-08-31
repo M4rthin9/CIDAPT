@@ -68,6 +68,27 @@ services:
       test: ['CMD-SHELL', 'curl -fsS http://localhost:9000/minio/health/live || exit 1']
     logging: *logging
 
+  # One-shot: MinIO ships with no buckets, so a fresh deploy would 500 on the
+  # first upload. Creates the media bucket (idempotent) and exits.
+  minio-init:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    environment:
+      TZ: UTC
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set in .env}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set in .env}
+      S3_BUCKET: ${S3_BUCKET:-cida-media}
+    entrypoint:
+      - sh
+      - -c
+      - >-
+        mc alias set minio http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" &&
+        mc mb --ignore-existing "minio/$$S3_BUCKET"
+    restart: 'no'
+    depends_on:
+      minio:
+        condition: service_healthy
+    logging: *logging
+
   gotenberg:
     build:
       context: ./gotenberg
@@ -114,7 +135,8 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD}
       PGDATABASE: ${POSTGRES_DB:-cida}
       MINIO_ENDPOINT: http://minio:9000
-      MINIO_BUCKET: ${MINIO_BUCKET:-cida-craft}
+      # Must be the bucket the API actually writes media to.
+      MINIO_BUCKET: ${S3_BUCKET:-cida-media}
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
       RESTIC_REPOSITORY: ${RESTIC_REPOSITORY:-}
@@ -178,7 +200,7 @@ services:
       VALKEY_URL: redis://:${VALKEY_PASSWORD}@valkey:6379
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cida}
       S3_ENDPOINT: http://minio:9000
-      S3_BUCKET: cida-craft
+      S3_BUCKET: ${S3_BUCKET:-cida-media}
       S3_ACCESS_KEY: ${MINIO_ROOT_USER}
       S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
     depends_on:
@@ -231,6 +253,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
       gotenberg:
         condition: service_healthy
       migrate:

@@ -16,6 +16,13 @@ do not flip DNS / open the storefront until the box next to it is checked. Secti
 - [ ] `ADMIN_BOOTSTRAP_*` superadmin rotated/changed and the account re-secured after first login.
 - [ ] `POSTGRES_PASSWORD`, `VALKEY_PASSWORD`, `MINIO_ROOT_*`, `LINE_*`, `SMTP_*` are production secrets.
 - [ ] `.env.example` documents every key; no guarantees/false defaults in prod.
+- [ ] `POSTGRES_PASSWORD` matches the **role inside the volume**, not just `.env`. `initdb` only
+      runs on an empty data dir, so rotating the value against an existing `pg_data` volume leaves
+      the old password in place and `migrate` fails with `28P01 password authentication failed`
+      (drizzle-kit swallows the message behind its spinner). Either start from an empty volume or
+      run `ALTER USER <user> WITH PASSWORD '<new>'` before the rotated `.env` goes live.
+- [ ] `COOKIE_SECURE=true` in prod (HTTPS). It is parsed as the literal strings `true`/`1` — any
+      other value is false.
 
 ## B. Payments & reconciliation (Finance)
 

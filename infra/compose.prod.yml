@@ -78,3 +78,9 @@ services:
 
   migrate:
     <<: *limits
+
+  seed:
+    <<: *limits
+
+  minio-init:
+    <<: *limits

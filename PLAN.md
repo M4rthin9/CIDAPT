@@ -19,13 +19,13 @@ every phase by reference.
 
 ## Decisions log
 
-| #   | Decision                                                                                                                       | Rationale                                                                                                                                                                                                                         |
-| --- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D1  | pnpm workspaces for the monorepo                                                                                               | Fast installs, workspace protocol. PowerShell execution policy blocks `pnpm.ps1`; invoke as `pnpm.cmd`.                                                                                                                           |
-| D2  | GitHub Actions CI on every PR                                                                                                  | Fits one-phase-one-PR; runs lint + typecheck + unit + Testcontainers integration.                                                                                                                                                 |
-| D3  | Payments reconcile via abstract `ReconciliationProvider` interface                                                             | Real PSP/bank not yet chosen. Implement `FakeProvider` for tests; wire real credentials later without touching order logic.                                                                                                       |
-| D4  | Node 22 LTS pinned everywhere (host has 22.23.2)                                                                               | Matches AGENTS.md runtime; containers pin `node:22-alpine` with digest.                                                                                                                                                           |
-| D5  | Skills authored just-in-time per phase                                                                                         | Keeps planning light; each area's rules written when first needed.                                                                                                                                                                |
+| #   | Decision                                                                                                                       | Rationale                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| --- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | pnpm workspaces for the monorepo                                                                                               | Fast installs, workspace protocol. PowerShell execution policy blocks `pnpm.ps1`; invoke as `pnpm.cmd`.                                                                                                                                                                                                                                                                                                                             |
+| D2  | GitHub Actions CI on every PR                                                                                                  | Fits one-phase-one-PR; runs lint + typecheck + unit + Testcontainers integration.                                                                                                                                                                                                                                                                                                                                                   |
+| D3  | Payments reconcile via abstract `ReconciliationProvider` interface                                                             | Real PSP/bank not yet chosen. Implement `FakeProvider` for tests; wire real credentials later without touching order logic.                                                                                                                                                                                                                                                                                                         |
+| D4  | Node 22 LTS pinned everywhere (host has 22.23.2)                                                                               | Matches AGENTS.md runtime; containers pin `node:22-alpine` with digest.                                                                                                                                                                                                                                                                                                                                                             |
+| D5  | Skills authored just-in-time per phase                                                                                         | Keeps planning light; each area's rules written when first needed.                                                                                                                                                                                                                                                                                                                                                                  |
 | D6  | Dev overlay publishes loopback-only convenience ports (Gotenberg :3010, MinIO console :9001, Mailpit :9025/:1025, pgweb :9081) | Prod shape keeps them internal per AGENTS.md; loopback binding keeps dev testable without violating the edge rule. Site address is scheme-carrying `SITE_URL` so `http://localhost` stays plain HTTP while prod domains get ACME. :8025/:8081 were relocated to :9025/:9081 because they fall inside the Windows Hyper-V excluded port range (7907–8106) on the primary dev host, which made `docker compose up` fail to bind them. |
 
 ---
@@ -181,7 +181,7 @@ every phase by reference.
 
 **Acceptance criteria**
 
-- [ ] Playwright: full checkout path green.
+- [x] Playwright: full checkout path green (`apps/web/e2e/storefront.spec.ts:422`, run against the prod-shaped compose stack behind Caddy — see P10).
 - [x] Duplicate webhook/statement line ingested twice → single payment row.
 - [x] Negative test proves a slip/mini-QR cannot move an order to verified.
 - [x] Manual verify requires reason + superadmin; audit entry flagged red.
@@ -206,7 +206,7 @@ every phase by reference.
 **Acceptance criteria**
 
 - [x] Forced-failure rollback mid-numbering leaves zero gaps.
-- [ ] Thai renders correctly in generated PDF (font check).
+- [x] Thai renders correctly in generated PDF (font check) — `apps/api/src/tests/p6-pdf-font.test.ts` run against the built Gotenberg image: both the Thai sample and the real `tax-invoice.html` embed a Sarabun face, not a Latin fallback.
 - [x] Correction only possible via credit/debit note objects.
 - [x] No outbound refund call exists in the codebase.
 
@@ -413,12 +413,62 @@ the payment option server-side and hands the storefront the QR / account details
   `rail` + `payment` with the tag-29 QR, and writes a `payment.initiate` audit row. Full API suite
   still green (141 tests).
 
+**P10 — first full stack bring-up (this session)**
+
+The prod-shaped stack (`compose.yml` + `compose.prod.yml`) was built and run end-to-end on Docker
+Desktop for the first time. Everything below was found by actually booting it; none of it was
+visible from the unit suite.
+
+- **`node:22.22-alpine3.23` was being clobbered locally.** `compose.dev.yml` gave `migrate` and
+  `seed` an `image:` while they inherit `build:` from the base file — a service with both makes
+  `compose build` _tag the built image with that name_. Building with the dev overlay therefore
+  overwrote the node base image with the migrate image, and every later `api`/`web`/`worker` build
+  inherited `ENTRYPOINT ["/bin/sh","-c"]` + the drizzle CMD: those containers ran bare `node`, read
+  empty stdin, exited 0 and restart-looped with no logs at all. Fixed with `build: !reset null` on
+  both dev services. Note the repair needs `docker compose build --pull` — BuildKit otherwise
+  reuses its cached base resolution and rebuilds the same broken image.
+- **CSP blocked storefront hydration.** Caddy's site-wide `script-src 'self'` rejected SvelteKit's
+  inline SSR bootstrap, so pages rendered but nothing was interactive — add-to-cart, form
+  validation and the language switcher all silently did nothing (5 e2e failures). CSP is now
+  per-route: the storefront emits its own hash-based policy (`kit.csp` `mode: 'hash'` in
+  `apps/web/svelte.config.js`), and Caddy applies the strict policy to `/api/*` and `/admin*`,
+  which ship no inline scripts. Caddy does not hot-reload a bind-mounted Caddyfile — restart it.
+- **`PROMPTPAY_NUMBER` failed at checkout instead of at boot.** The value shipped in `.env.example`
+  (`010753700088205`) is not a Thai mobile, and `buildRailPayload` encodes tag-29 as a phone proxy —
+  so a deploy that copied the example 500'd on `PromptPayError` at a customer's checkout. The
+  config schema now rejects anything but `0XXXXXXXXX` / `66XXXXXXXXX` / empty, so the container
+  refuses to start instead (AGENTS.md: crash on invalid config), and the example defaults to empty
+  (bank-transfer rail). Supporting a 13-digit national ID or 15-digit eWallet ID would need
+  `buildRailPayload` extended — `@payments-review` territory, not done here.
+- **`COOKIE_SECURE` was `z.coerce.boolean()`**, which is true for _every_ non-empty string
+  including `"false"` — an HTTP deploy would set `Secure` on the admin session cookie and login
+  would be silently impossible. Now parsed as the literal `true`/`1`.
+- **MinIO had no bucket.** Nothing in the repo created one, so the first media upload on a fresh
+  deploy would fail. Added the `minio-init` one-shot (`mc mb --ignore-existing`), gated by
+  `service_completed_successfully` on `api`.
+- **`backup` mirrored the wrong bucket.** It used `MINIO_BUCKET:-cida-craft` and `worker`
+  hardcoded `S3_BUCKET: cida-craft`, while the API writes to `S3_BUCKET` (`cida-media`) — nightly
+  backups would have captured an empty/nonexistent bucket. Both read `${S3_BUCKET}` now.
+- **Gotenberg's first render 500'd on a cold container** (`websocket url timeout reached`):
+  Chromium's cold start exceeds the 20s default on a loaded host, so the first invoice after a
+  deploy would fail. `--chromium-start-timeout=120s --api-timeout=180s` baked into the image.
+- **Rotating `POSTGRES_PASSWORD` does not reach an existing volume** — `initdb` only runs on an
+  empty data dir, so `migrate` fails `28P01`, and drizzle-kit hides the message behind its spinner.
+  Documented in `infra/GO_LIVE.md` §A with the `ALTER USER` remedy.
+- `seed` was the one prod service with no resource limit; added.
+
+**Verified green on the running stack:** all 12 services healthy behind Caddy on `http://localhost`
+(`/` 302 language redirect, `/api/v1/*` 200, `/admin/` 200), catalogue + bootstrap superadmin
+seeded, and `apps/web/e2e/storefront.spec.ts` **44/44** against it — which closes the P5 full
+checkout-path criterion. Repo gate green: `pnpm lint`, `pnpm -r typecheck`, `pnpm -r test`
+(148 API tests, +7 this session).
+
 **Acceptance criteria**
 
 - [x] Image upload + reports + manual-verify admin UIs shipped and verifying green.
 - [ ] Wiped-VPS + repo + `.env` + latest backup fully reconstitutes the system (rehearsed, documented).
 - [ ] No host dependencies beyond Docker on the VPS.
-- [ ] Resource limits present on every prod service; healthchecks gating startup.
+- [x] Resource limits present on every prod service; healthchecks gating startup (verified from the rendered `compose config`: only `caddy` publishes 80/443, every long-running service carries CPU/memory limits and a healthcheck, one-shots carry limits).
 - [ ] Go-live checklist signed off.
 
 **Gates:** full `@payments-review` + ops review. The manual-verify UI (payment-adjacent) and the

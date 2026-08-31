@@ -2,6 +2,11 @@ services:
   # One-shot migrations: must exit 0 before api ever starts (P4+ adds that
   # dependency with condition: service_completed_successfully).
   migrate:
+    # !reset drops the base file's `build:`. Without it this service carries both
+    # build+image, so `compose build` tags the built image as node:22.22-alpine3.23
+    # and clobbers the base image locally — every later api/web/worker build then
+    # inherits the migrate ENTRYPOINT and the container exits 0 on boot.
+    build: !reset null
     image: node:22.22-alpine3.23
     working_dir: /repo
     command:
@@ -24,6 +29,7 @@ services:
 
   seed:
     profiles: ['tools']
+    build: !reset null
     image: node:22.22-alpine3.23
     working_dir: /repo
     command:

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { selectPaymentRail, accountDetails, buildRailPayload } from '../lib/payments.js';
+import { envSchema } from '../config.js';
 import type { Env } from '../config.js';
 
 /**
@@ -135,4 +136,39 @@ describe('buildRailPayload', () => {
   it('bank transfer with no configured account yields empty account details', () => {
     expect(buildRailPayload(env(), ORDER, 'bank_transfer').accountDetails).toBeUndefined();
   });
+});
+
+/**
+ * The tag-29 builder only encodes a phone proxy, so a PROMPTPAY_NUMBER it cannot
+ * encode has to be rejected at boot. Before this guard the container started
+ * happily on the 15-digit value that shipped in .env.example and the failure
+ * surfaced as a 500 on a customer's checkout (PromptPayError pp_bad_phone).
+ */
+describe('P10 — PROMPTPAY_NUMBER is validated at boot', () => {
+  const base = {
+    DATABASE_URL: 'postgres://x:x@localhost:5432/x',
+    VALKEY_URL: 'redis://localhost:6379',
+    S3_ENDPOINT: 'http://localhost:9000',
+    S3_ACCESS_KEY: 'k',
+    S3_SECRET_KEY: 's',
+    SESSION_SECRET: 'x'.repeat(32),
+    GOTENBERG_URL: 'http://localhost:3000',
+    APP_URL: 'http://localhost',
+    SITE_URL: 'http://localhost',
+  };
+
+  it.each(['0812345678', '66812345678', ''])('accepts %s', (n) => {
+    expect(envSchema.safeParse({ ...base, PROMPTPAY_NUMBER: n }).success).toBe(true);
+  });
+
+  it.each(['010753700088205', '1234567890123', 'not-a-number', '081234567'])(
+    'rejects %s at boot rather than at checkout',
+    (n) => {
+      const parsed = envSchema.safeParse({ ...base, PROMPTPAY_NUMBER: n });
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.issues[0]?.message).toMatch(/Thai mobile number/);
+      }
+    },
+  );
 });

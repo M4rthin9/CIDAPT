@@ -8,9 +8,15 @@
 		X-Frame-Options DENY
 		Referrer-Policy strict-origin-when-cross-origin
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
-		# Svelte injects inline styles; frame-src self for any embedded media.
-		Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 	}
+
+	# CSP is per-route. The storefront sets its own (SvelteKit `csp: { mode:
+	# 'hash' }` in apps/web/svelte.config.js) because its SSR bootstrap is an
+	# inline <script> whose hash changes per build — a site-wide `script-src
+	# 'self'` here blocked hydration entirely. The admin SPA and the API ship no
+	# inline scripts, so they take the strict policy verbatim.
+	@static_or_api path /api/* /admin /admin/*
+	header @static_or_api Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
 	handle /api/* {
 		reverse_proxy api:3000
