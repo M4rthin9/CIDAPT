@@ -81,6 +81,9 @@ services:
 
   seed:
     <<: *limits
+<<<<<<< HEAD
 
   minio-init:
     <<: *limits
+=======
+>>>>>>> ab45d903496053af28d4eab6394a47f541763586
