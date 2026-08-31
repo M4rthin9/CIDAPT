@@ -1,10 +1,22 @@
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
-import { categories, divisions, products } from './schema';
+import { pbkdf2Sync, randomBytes } from 'node:crypto';
+import { adminUsers, auditLog, categories, divisions, products } from './schema';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL is required');
+}
+
+// Matches apps/api/src/middleware/auth.ts — do not drift.
+const PBKDF2_ITERATIONS = 100_000;
+const PBKDF2_KEY_LENGTH = 64;
+const PBKDF2_DIGEST = 'sha512';
+
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString('hex');
+  const hash = pbkdf2Sync(password, salt, PBKDF2_ITERATIONS, PBKDF2_KEY_LENGTH, PBKDF2_DIGEST);
+  return `${salt}:${hash.toString('hex')}`;
 }
 
 const seedData = {
@@ -138,9 +150,55 @@ const seedData = {
   ],
 } as const;
 
+// Non-negotiable #9: a mutating action here is logged to audit_log.
+// Creates the bootstrap superadmin from ADMIN_BOOTSTRAP_EMAIL / ADMIN_BOOTSTRAP_PASSWORD.
+// Refuses to touch an existing admin of the same email so a rotated password is never clobbered.
+export async function setupBootstrapSuperadmin(db: ReturnType<typeof drizzle>): Promise<{
+  created: boolean;
+  reason?: string;
+  adminId?: string;
+}> {
+  const email = process.env.ADMIN_BOOTSTRAP_EMAIL;
+  const password = process.env.ADMIN_BOOTSTRAP_PASSWORD;
+  if (!email || !password) {
+    return { created: false, reason: 'ADMIN_BOOTSTRAP_* not set' };
+  }
+  const existing = await db
+    .select({ id: adminUsers.id })
+    .from(adminUsers)
+    .where(eq(adminUsers.email, email))
+    .limit(1);
+  if (existing.length > 0) {
+    return { created: false, reason: 'already exists — refusing to clobber a rotated admin' };
+  }
+  const now = Math.floor(Date.now() / 1000);
+  const [row] = await db
+    .insert(adminUsers)
+    .values({
+      email,
+      passwordHash: hashPassword(password),
+      displayName: 'ผู้ดูแลระบบ',
+      role: 'superadmin',
+      active: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .returning({ id: adminUsers.id });
+  await db.insert(auditLog).values({
+    action: 'bootstrap.superadmin_create',
+    severity: 'normal',
+    entityType: 'admin_users',
+    entityId: row.id,
+    afterState: { email, role: 'superadmin', source: 'seed' },
+    createdAt: now,
+  });
+  return { created: true, adminId: row.id };
+}
+
 async function main() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const db = drizzle(pool);
+  let admin: Awaited<ReturnType<typeof setupBootstrapSuperadmin>> | undefined;
   try {
     await db.transaction(async (tx) => {
       for (const d of seedData.divisions) {
@@ -193,6 +251,8 @@ async function main() {
           .onConflictDoUpdate({ target: [products.sku], set: values });
       }
     });
+    // Superadmin bootstrap runs after the catalogue tx (its own writes + audit row).
+    admin = await setupBootstrapSuperadmin(db);
     process.stdout.write(
       JSON.stringify({
         level: 'info',
@@ -200,6 +260,7 @@ async function main() {
         divisions: seedData.divisions.length,
         categories: seedData.categories.length,
         products: seedData.products.length,
+        admin: admin.created ? 'created' : admin.reason,
       }) + '\n',
     );
   } finally {
