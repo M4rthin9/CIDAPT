@@ -1,14 +1,14 @@
 import { Hono } from 'hono';
 import { inArray } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../db.js';
 import { orders, orderItems } from '@cida/db/schema';
 import { products } from '@cida/db/schema';
-import { writeAuditLog } from '../middleware/audit';
-import { AppError } from '../errors';
+import { writeAuditLog } from '../middleware/audit.js';
+import { AppError } from '../errors.js';
 import { checkoutSchema } from '@cida/contracts';
-import { nextOrderNo } from '../lib/order-no';
-import { getEnv } from '../config';
-import { createPayment, selectPaymentRail } from '../lib/payments';
+import { nextOrderNo } from '../lib/order-no.js';
+import { getEnv } from '../config.js';
+import { createPayment, selectPaymentRail } from '../lib/payments.js';
 
 const checkout = new Hono();
 

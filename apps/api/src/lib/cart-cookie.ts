@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { getEnv } from '../config';
+import { getEnv } from '../config.js';
 
 export type CartLine = { productId: string; quantity: number };
 

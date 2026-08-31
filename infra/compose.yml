@@ -140,14 +140,19 @@ services:
     environment:
       TZ: UTC
       NODE_ENV: production
+      # adapter-node reads PORT; Caddy proxies the storefront at web:3001, so
+      # leaving it at the adapter default (3000) would 502 every page.
+      PORT: '3001'
       API_URL: http://api:3000
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:3000}
+      ORIGIN: ${SITE_URL:-http://localhost}
     depends_on:
       api:
         condition: service_healthy
     healthcheck:
       <<: *health_defaults
-      start_period: 10s
-      test: ['CMD-SHELL', 'node -e "process.exit(0)"']
+      start_period: 15s
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:3001/ || exit 1']
     logging: *logging
 
   # One-shot: builds the admin SPA into the volume Caddy serves at /admin, then
@@ -183,10 +188,12 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+    # The worker has no HTTP port by design (P7), so liveness is "the Node
+    # process that owns PID 1 is still there" — a BullMQ crash exits it.
     healthcheck:
       <<: *health_defaults
-      start_period: 10s
-      test: ['CMD-SHELL', 'node -e "process.exit(0)"']
+      start_period: 15s
+      test: ['CMD-SHELL', 'pgrep -f apps/worker/dist/index.js >/dev/null || exit 1']
     logging: *logging
 
   api:
@@ -204,13 +211,19 @@ services:
       S3_ACCESS_KEY: ${MINIO_ROOT_USER}
       S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
       SESSION_SECRET: ${SESSION_SECRET:?set in .env}
-      COOKIE_SECURE: 'true'
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-localhost}
       APP_URL: ${APP_URL:?set in .env}
       SITE_URL: ${SITE_URL:?set in .env}
       GOTENBERG_URL: http://gotenberg:3000
       RECONCILIATION_PROVIDER: ${RECONCILIATION_PROVIDER:-fake}
+      # Backend-selected rail inputs (precedence billpay -> promptpay -> bank).
+      # Empty disables that rail; selectPaymentRail() resolves server-side.
       BILLER_COMP_CODE: ${BILLER_COMP_CODE:-}
+      PROMPTPAY_NUMBER: ${PROMPTPAY_NUMBER:-}
+      BANK_NAME: ${BANK_NAME:-}
+      BANK_ACCOUNT_NAME: ${BANK_ACCOUNT_NAME:-}
+      BANK_ACCOUNT_NO: ${BANK_ACCOUNT_NO:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -242,6 +255,25 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    logging: *logging
+
+  # Catalogue + bootstrap-superadmin seed, on the migrate image so it needs no
+  # bind mount or host toolchain. Profile-gated: `--profile seed up seed`.
+  seed:
+    profiles: ['seed']
+    build:
+      context: ..
+      dockerfile: packages/db/Dockerfile
+    command: ['./node_modules/.bin/tsx src/seed.ts']
+    environment:
+      TZ: UTC
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cida}
+      ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-}
+    restart: 'no'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     logging: *logging
 
 volumes:

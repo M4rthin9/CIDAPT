@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../db.js';
 import { creditNotes, taxInvoices } from '@cida/db/schema';
-import { authMiddleware } from '../middleware/auth';
-import { requireMinRole } from '../middleware/rbac';
-import { writeAuditLog } from '../middleware/audit';
-import { AppError } from '../errors';
+import { authMiddleware } from '../middleware/auth.js';
+import { requireMinRole } from '../middleware/rbac.js';
+import { writeAuditLog } from '../middleware/audit.js';
+import { AppError } from '../errors.js';
 import { creditNoteCreateSchema } from '@cida/contracts';
-import { nextDocumentNo } from '../lib/doc-counter';
+import { nextDocumentNo } from '../lib/doc-counter.js';
 
 const creditNotesRoutes = new Hono();
 

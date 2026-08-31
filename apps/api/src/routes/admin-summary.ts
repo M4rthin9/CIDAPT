@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { count, eq, inArray } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../db.js';
 import { orders, productEnquiries, products } from '@cida/db/schema';
-import { authMiddleware } from '../middleware/auth';
-import { requireMinRole } from '../middleware/rbac';
+import { authMiddleware } from '../middleware/auth.js';
+import { requireMinRole } from '../middleware/rbac.js';
 
 const adminSummary = new Hono();
 

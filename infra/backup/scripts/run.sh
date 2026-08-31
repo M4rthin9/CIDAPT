@@ -10,6 +10,10 @@ log() {
 
 TS=$(date -u +%Y%m%dT%H%M%SZ)
 
+# /backups is a named volume: on a restored host it may be mounted empty, so
+# the layout the image ships must be re-asserted before pg_dump writes to it.
+mkdir -p /backups/db /backups/media
+
 # --- 1. Database dump (pg_dump) -----------------------------------------------
 log "backup_db_start"
 if ! PGPASSWORD="$PGPASSWORD" pg_dump \
@@ -19,9 +23,11 @@ if ! PGPASSWORD="$PGPASSWORD" pg_dump \
   log "backup_db_failed" error
   exit 1
 fi
-# Keep N most recent local dumps; prune the rest.
-find /backups/db -type f -name 'cida-*.dump' -printf '%T@ %p\n' |
-  sort -rn | tail -n +$((KEEP_LOCAL + 1)) | cut -d' ' -f2- | xargs -r rm -f
+# Keep N most recent local dumps; prune the rest. Busybox find has no -printf,
+# so ordering comes from `ls -1t` (newest first) - dump names are timestamped
+# and contain no whitespace, so this is safe here.
+ls -1t /backups/db/cida-*.dump 2>/dev/null |
+  tail -n +$((${KEEP_LOCAL:-7} + 1)) | xargs -r rm -f
 log "backup_db_done"
 
 # --- 2. MinIO mirror (media objects) ------------------------------------------

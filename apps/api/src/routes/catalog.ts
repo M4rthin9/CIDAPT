@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { and, asc, eq, or } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../db.js';
 import { categories, divisions, products } from '@cida/db/schema';
-import { AppError } from '../errors';
+import { AppError } from '../errors.js';
 
 const catalog = new Hono();
 

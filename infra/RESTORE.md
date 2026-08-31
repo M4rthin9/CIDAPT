@@ -38,7 +38,7 @@ wiped-VPS restore.
 ```bash
 git clone <repo> cida-craft && cd cida-craft
 cp .env.example .env   # fill ALL production values; never commit
-# SITE_URL=https://<prod-domain>, ACSM_EMAIL set, ACME_EMAIL set for TLS
+# SITE_URL=https://<prod-domain> and ACME_EMAIL set for TLS
 docker compose -f infra/compose.yml -f infra/compose.prod.yml up -d --build
 docker compose -f infra/compose.yml -f infra/compose.prod.yml ps   # caddy/api/web/worker/backup healthy
 ```
@@ -61,11 +61,11 @@ restic -r "$RESTIC_REPOSITORY" restore latest --target /tmp/restore
 # A) pg_restore into the running container:
 docker compose -f infra/compose.yml -f infra/compose.prod.yml cp /tmp/restore/backups/db/cida-<TS>.dump postgres:/tmp/restore.dump
 docker compose -f infra/compose.yml -f infra/compose.prod.yml exec postgres \
-  pg_restore --no-owner --no-acl -U "$POSTGRES_USER" -d "$POSTGRES_DATABASE" /tmp/restore.dump
+  pg_restore --no-owner --no-acl -U "$POSTGRES_USER" -d "$POSTGRES_DB" /tmp/restore.dump
 
 # B) Or reload the dump the exact way pg_dump captured it:
 docker compose -f infra/compose.yml -f infra/compose.prod.yml exec -T postgres \
-  sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_restore --no-owner --no-acl -U "$POSTGRES_USER" -d "$POSTGRES_DATABASE"' < /tmp/restore/backups/db/cida-<TS>.dump
+  sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_restore --no-owner --no-acl -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < /tmp/restore/backups/db/cida-<TS>.dump
 ```
 
 ### 4. Restore the media (MinIO) objects

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
-import { AppError } from '../errors';
+import { AppError } from '../errors.js';
 
 function c_json(status: number, body: unknown) {
   return new Response(JSON.stringify(body), {

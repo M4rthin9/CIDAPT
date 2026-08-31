@@ -1,20 +1,20 @@
 import { Hono } from 'hono';
 import { eq, and } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../db.js';
 import { payments, orders } from '@cida/db/schema';
-import { authMiddleware } from '../middleware/auth';
-import { requireMinRole } from '../middleware/rbac';
-import { writeAuditLog } from '../middleware/audit';
-import { AppError } from '../errors';
+import { authMiddleware } from '../middleware/auth.js';
+import { requireMinRole } from '../middleware/rbac.js';
+import { writeAuditLog } from '../middleware/audit.js';
+import { AppError } from '../errors.js';
 import {
   paymentInitiateSchema,
   reconciliationEventSchema,
   manualVerifySchema,
 } from '@cida/contracts';
-import { getEnv } from '../config';
-import type { ReconciliationProvider } from '../lib/reconciliation';
-import { FakeReconciliationProvider } from '../lib/reconciliation';
-import { createPayment } from '../lib/payments';
+import { getEnv } from '../config.js';
+import type { ReconciliationProvider } from '../lib/reconciliation.js';
+import { FakeReconciliationProvider } from '../lib/reconciliation.js';
+import { createPayment } from '../lib/payments.js';
 
 const paymentsRoutes = new Hono();
 

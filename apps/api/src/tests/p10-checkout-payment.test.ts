@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
-import { AppError } from '../errors';
+import { AppError } from '../errors.js';
 
 /**
  * P10 — backend-selected payment rail at checkout (HTTP level).
@@ -69,7 +69,7 @@ vi.mock('../db', () => {
   return { db: { instance: chain }, getDb: () => chain, closeDb: async () => {} };
 });
 
-const { default: checkout } = await import('../routes/checkout');
+const { default: checkout } = await import('../routes/checkout.js');
 
 function app() {
   const a = new Hono();

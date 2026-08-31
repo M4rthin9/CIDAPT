@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { db } from '../db';
+import { db } from '../db.js';
 import { auditLog } from '@cida/db/schema';
 
 export interface AuditEntry {

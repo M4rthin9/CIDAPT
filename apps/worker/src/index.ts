@@ -1,5 +1,5 @@
 import { pino } from 'pino';
-import { connection, reconciliationQueue, notifyQueue, enquiryQueue } from './queues';
+import { connection, reconciliationQueue, notifyQueue, enquiryQueue } from './queues.js';
 
 const log = pino({ name: 'worker', level: process.env.LOG_LEVEL ?? 'info' });
 
@@ -26,8 +26,8 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
 // Job processors
-import './jobs/reconciliation';
-import './jobs/notify';
-import './jobs/enquiry';
+import './jobs/reconciliation.js';
+import './jobs/notify.js';
+import './jobs/enquiry.js';
 
 log.info('Worker starting');

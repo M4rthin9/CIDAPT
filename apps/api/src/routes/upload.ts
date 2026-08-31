@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
-import { authMiddleware } from '../middleware/auth';
-import { requireMinRole } from '../middleware/rbac';
-import { writeAuditLog } from '../middleware/audit';
-import { AppError } from '../errors';
-import { getEnv } from '../config';
+import { authMiddleware } from '../middleware/auth.js';
+import { requireMinRole } from '../middleware/rbac.js';
+import { writeAuditLog } from '../middleware/audit.js';
+import { AppError } from '../errors.js';
+import { getEnv } from '../config.js';
 import { S3Storage } from '@cida/storage';
 import { generateImageLadder, getImageKey } from '@cida/storage';
 

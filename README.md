@@ -44,7 +44,7 @@ backup: crond pg_dump + MinIO mirror + restic offsite
 ```
 
 - `infra/compose.yml` — base used by dev **and** prod (pinned tags/digests, `TZ=UTC`, healthchecks, `json-file` rotation, named volumes only).
-- `infra/compose.dev.yml` — bind mounts, hot reload, Mailpit `:8025/:1025`, pgweb `:8081`, MinIO console `:9001` (loopback-only), Gotenberg `:3010`.
+- `infra/compose.dev.yml` — bind mounts, hot reload, Mailpit `:9025/:1025`, pgweb `:9081`, MinIO console `:9001` (loopback-only), Gotenberg `:3010`.
 - `infra/compose.prod.yml` — image tags, restart policies, resource limits.
 - `infra/Caddyfile` — `{$SITE_URL}` (scheme-carrying; `http://localhost` stays plain HTTP, prod domain gets ACME).
 - Migrations run as a **one-shot service** that must `exit 0` before `api` starts — never from app boot (replicas would race).
@@ -120,8 +120,8 @@ docker compose -f infra/compose.yml -f infra/compose.dev.yml --profile tools run
 #  web:        http://localhost          (Caddy → web)
 #  api:        http://localhost/api/v1/healthz
 #  admin:      http://localhost/admin
-#  Mailpit:    http://localhost:8025
-#  pgweb:      http://localhost:8081
+#  Mailpit:    http://localhost:9025
+#  pgweb:      http://localhost:9081
 #  MinIO:      http://localhost:9001
 #  Gotenberg:  http://localhost:3010
 ```

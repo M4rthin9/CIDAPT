@@ -409,3 +409,67 @@ test.describe('Slug redirects', () => {
     await expect(page.locator('.workshop-plate')).toBeVisible();
   });
 });
+
+// ============================================
+// Acceptance (P5): Playwright — full checkout path
+// PDP -> cart -> checkout form -> order created -> backend-selected payment shown.
+// The buyer never picks a rail: the API returns `rail` + `payment` and the page
+// renders whatever the backend chose (QR for a tag-29/tag-30 rail, else the
+// BANK_* account details).
+// ============================================
+
+test.describe('Checkout path', () => {
+  test('cart to placed order renders the backend-selected payment', async ({ page }) => {
+    await withLang(page, 'th', pdpPath(CART_PRODUCT));
+    await page.click('.cart-section .btn-primary');
+    await expect(page.locator('.cart-msg')).toContainText('เพิ่มลงตะกร้าแล้ว');
+
+    await gotoHydrated(page, '/th/cart');
+    await expect(page.locator('.cart-item')).toHaveCount(1);
+
+    await gotoHydrated(page, '/th/checkout');
+    await page.fill('#cname', 'ทดสอบ ระบบ');
+    await page.fill('#cphone', '0812345678');
+    await page.fill('#cemail', 'e2e@example.test');
+    await page.fill('#addr1', '99/1 ถนนทดสอบ');
+    await page.fill('#subdistrict', 'ในเมือง');
+    await page.fill('#district', 'เมือง');
+    await page.fill('#province', 'นครปฐม');
+    await page.fill('#postcode', '73000');
+
+    const placed = page.waitForResponse(
+      (r) => r.url().includes('/api/v1/checkout') && r.request().method() === 'POST',
+    );
+    await page.click('.checkout-form .btn-primary');
+    const res = await placed;
+    expect(res.status()).toBe(200);
+
+    // Order number is the bill-payment Ref1: CIDA-YYMM-NNNNN.
+    const success = page.locator('.checkout-success');
+    await expect(success).toBeVisible();
+    await expect(success.locator('.success-order-no')).toHaveText(/^CIDA-\d{4}-\d{5}$/);
+
+    // A payment was auto-initiated and the rail's artefact is on screen.
+    const body = await res.json();
+    expect(body.data.rail).toBeTruthy();
+    expect(body.data.payment.status).toBe('pending');
+    expect(body.data.payment.amountSatang).toBe(body.data.totalSatang);
+
+    await expect(page.locator('.pay-step')).toBeVisible();
+    if (body.data.payment.qrPayload) {
+      await expect(page.locator('.pay-qr')).toBeVisible();
+      // EMVCo payload, not a placeholder: version tag then the merchant tag.
+      expect(body.data.payment.qrPayload).toMatch(/^000201/);
+      expect(body.data.payment.qrPayload).toMatch(/29\d{2}|30\d{2}/);
+    } else {
+      await expect(page.locator('.pay-account')).toBeVisible();
+      expect(body.data.payment.accountDetails.accountNo).toBeTruthy();
+    }
+  });
+
+  test('checkout with an empty cart cannot be submitted', async ({ page }) => {
+    await page.context().clearCookies();
+    await withLang(page, 'th', '/checkout');
+    await expect(page.locator('.checkout-form .btn-primary')).toBeDisabled();
+  });
+});

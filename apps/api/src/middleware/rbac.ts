@@ -1,5 +1,5 @@
 import type { Context, Next } from 'hono';
-import { AppError } from '../errors';
+import { AppError } from '../errors.js';
 
 const ROLE_HIERARCHY: Record<string, number> = {
   officer: 1,

@@ -1,6 +1,6 @@
 import { ZodError } from 'zod';
 import type { StatusCode } from 'hono/utils/http-status';
-import { getLogger } from './logger';
+import { getLogger } from './logger.js';
 
 export class AppError extends Error {
   constructor(

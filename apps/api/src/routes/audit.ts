@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { desc, sql } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../db.js';
 import { auditLog } from '@cida/db/schema';
-import { authMiddleware } from '../middleware/auth';
-import { requireMinRole } from '../middleware/rbac';
+import { authMiddleware } from '../middleware/auth.js';
+import { requireMinRole } from '../middleware/rbac.js';
 
 const auditRoutes = new Hono();
 

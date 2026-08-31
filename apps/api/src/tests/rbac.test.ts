@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Hono, type Context, type Next } from 'hono';
-import { requireRole, requireMinRole } from '../middleware/rbac';
-import { AppError } from '../errors';
+import { requireRole, requireMinRole } from '../middleware/rbac.js';
+import { AppError } from '../errors.js';
 
 // Mock auth middleware that sets context vars without DB
 function mockAuth(role: string) {

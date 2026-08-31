@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
-import { AppError } from '../errors';
+import { AppError } from '../errors.js';
 import {
   eventUpsertSchema,
   newsUpsertSchema,
@@ -83,15 +83,15 @@ vi.mock('../db', () => {
   return { db: { instance: chain }, getDb: () => chain, closeDb: async () => {} };
 });
 
-const { default: catalogAdmin } = await import('../routes/catalog-admin');
-const { default: contentRoutes } = await import('../routes/content');
-const { default: couponRoutes } = await import('../routes/coupons');
-const { default: inventoryRoutes } = await import('../routes/inventory');
-const { default: ordersAdmin } = await import('../routes/orders-admin');
-const { default: enquiriesAdmin } = await import('../routes/enquiries-admin');
-const { default: adminUserRoutes } = await import('../routes/admin-users');
-const { default: auditRoutes } = await import('../routes/audit');
-const { default: adminSummary } = await import('../routes/admin-summary');
+const { default: catalogAdmin } = await import('../routes/catalog-admin.js');
+const { default: contentRoutes } = await import('../routes/content.js');
+const { default: couponRoutes } = await import('../routes/coupons.js');
+const { default: inventoryRoutes } = await import('../routes/inventory.js');
+const { default: ordersAdmin } = await import('../routes/orders-admin.js');
+const { default: enquiriesAdmin } = await import('../routes/enquiries-admin.js');
+const { default: adminUserRoutes } = await import('../routes/admin-users.js');
+const { default: auditRoutes } = await import('../routes/audit.js');
+const { default: adminSummary } = await import('../routes/admin-summary.js');
 
 function app() {
   const a = new Hono();

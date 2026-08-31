@@ -1,9 +1,9 @@
 import { Hono, type Context } from 'hono';
 import { and, count, desc, gte, lte, sql } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../db.js';
 import { orders } from '@cida/db/schema';
-import { authMiddleware } from '../middleware/auth';
-import { requireMinRole } from '../middleware/rbac';
+import { authMiddleware } from '../middleware/auth.js';
+import { requireMinRole } from '../middleware/rbac.js';
 
 const reports = new Hono();
 

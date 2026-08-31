@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { selectPaymentRail, accountDetails, buildRailPayload } from '../lib/payments';
-import type { Env } from '../config';
+import { selectPaymentRail, accountDetails, buildRailPayload } from '../lib/payments.js';
+import type { Env } from '../config.js';
 
 /**
  * P10 — backend-selected payment rail.

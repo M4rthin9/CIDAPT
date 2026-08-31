@@ -1,6 +1,6 @@
 import { Worker, Job } from 'bullmq';
 import { pino } from 'pino';
-import { connection } from '../queues';
+import { connection } from '../queues.js';
 
 const log = pino({ name: 'worker:notify', level: process.env.LOG_LEVEL ?? 'info' });
 

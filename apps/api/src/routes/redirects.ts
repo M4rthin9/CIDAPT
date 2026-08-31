@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { redirects } from '@cida/db/schema';
 import { eq } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../db.js';
 
 const app = new Hono();
 

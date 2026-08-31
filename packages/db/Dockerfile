@@ -13,5 +13,9 @@ WORKDIR /repo
 COPY --from=builder /repo/node_modules ./node_modules
 COPY --from=builder /repo/packages ./packages
 COPY --from=builder /repo/package.json ./package.json
+# Invoke drizzle-kit straight from the workspace bin. Going through `pnpm run`
+# here would trigger pnpm's deps-status check, and that re-runs `pnpm install`
+# against a tree that has no pnpm-workspace.yaml — which fails the one-shot.
+WORKDIR /repo/packages/db
 ENTRYPOINT ["/bin/sh", "-c"]
-CMD ["corepack enable && corepack prepare pnpm@11.22.0 --activate && pnpm --filter @cida/db migrate"]
+CMD ["./node_modules/.bin/drizzle-kit migrate"]

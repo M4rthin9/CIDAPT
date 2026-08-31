@@ -2,10 +2,10 @@ import type { Context, Next } from 'hono';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { createHash, randomBytes, pbkdf2Sync, timingSafeEqual } from 'node:crypto';
 import { eq, and, gt } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../db.js';
 import { adminUsers, sessions } from '@cida/db/schema';
-import { getEnv } from '../config';
-import { AppError } from '../errors';
+import { getEnv } from '../config.js';
+import { AppError } from '../errors.js';
 
 const COOKIE_NAME = 'cida_session';
 const ITERATIONS = 100_000;

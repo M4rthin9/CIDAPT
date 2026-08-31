@@ -1,0 +1,45 @@
+# Build context is the whole repo (context: ..). Previous to this file, the
+# entire node_modules tree (with pnpm's `.ignored` symlink markers) was sent to
+# the daemon, failing the build. None of the ./Dockerfiles COPY node_modules or
+# build output from context — everything is installed/built fresh in-stage.
+
+# Dependencies / stores
+node_modules
+**/node_modules
+.pnpm-store
+**/.pnpm-store
+
+# VCS
+.git
+.gitignore
+.gitattributes
+
+# Local tool / framework caches
+.svelte-kit
+.wrangler
+.vite
+vitest.config.ts
+
+# Build output
+**/dist
+**/build
+**/.svelte-kit
+
+# Secrets & local env — never COPYed, never shipped
+infra/.env
+.env
+**/.env
+
+# IDE / OS
+.idea
+.vscode
+*.swp
+.DS_Store
+Thumbs.db
+
+# Doc / plan / editor working files (host-only, never needed in an image)
+docs
+PLAN.md
+AGENTS.md
+.opencode
+.github

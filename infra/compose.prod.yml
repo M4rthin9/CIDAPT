@@ -70,3 +70,11 @@ services:
         limits:
           cpus: '0.50'
           memory: 256M
+
+  # One-shot services: they exit, but a runaway build/migration must not be able
+  # to starve the host either. Limits apply while the container runs.
+  admin:
+    <<: *limits
+
+  migrate:
+    <<: *limits

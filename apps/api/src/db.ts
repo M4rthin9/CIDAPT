@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import * as schema from '@cida/db/schema';
-import { getEnv } from './config';
+import { getEnv } from './config.js';
 
 let _db: ReturnType<typeof drizzle<typeof schema>> | undefined;
 let _pool: pg.Pool | undefined;

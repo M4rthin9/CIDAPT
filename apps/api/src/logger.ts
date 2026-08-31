@@ -1,5 +1,5 @@
 import pino from 'pino';
-import type { Env } from './config';
+import type { Env } from './config.js';
 
 let _logger: pino.Logger | undefined;
 

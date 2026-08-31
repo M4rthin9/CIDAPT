@@ -1,5 +1,5 @@
 import { eq, and } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../db.js';
 import { documentCounters } from '@cida/db/schema';
 
 // Gapless numbering (non-negotiable #6): locked counter row per scope+period.

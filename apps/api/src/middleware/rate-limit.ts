@@ -1,6 +1,6 @@
 import type { Context, MiddlewareHandler } from 'hono';
-import { getValkey } from '../valkey';
-import { getLogger } from '../logger';
+import { getValkey } from '../valkey.js';
+import { getLogger } from '../logger.js';
 
 /**
  * Valkey-backed fixed-window rate limiter, keyed by client IP + route path.

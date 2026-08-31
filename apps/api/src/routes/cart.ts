@@ -3,12 +3,12 @@ import { getCookie, setCookie } from 'hono/cookie';
 import { inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import type { Context } from 'hono';
-import { db } from '../db';
+import { db } from '../db.js';
 import { products } from '@cida/db/schema';
-import { AppError } from '../errors';
-import { getEnv } from '../config';
-import { decodeCart, encodeCart, type CartLine } from '../lib/cart-cookie';
-import { formatSatang } from './catalog';
+import { AppError } from '../errors.js';
+import { getEnv } from '../config.js';
+import { decodeCart, encodeCart, type CartLine } from '../lib/cart-cookie.js';
+import { formatSatang } from './catalog.js';
 
 const cart = new Hono();
 

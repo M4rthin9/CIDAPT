@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
-import { AppError } from '../errors';
+import { AppError } from '../errors.js';
 
 /**
  * P10 carried-gap suite for the admin surface added during P10:
@@ -61,8 +61,8 @@ vi.mock('../db', () => {
   return { db: { instance: chain }, getDb: () => chain, closeDb: async () => {} };
 });
 
-const { default: reports } = await import('../routes/reports');
-const { default: paymentsAdmin } = await import('../routes/payments-admin');
+const { default: reports } = await import('../routes/reports.js');
+const { default: paymentsAdmin } = await import('../routes/payments-admin.js');
 
 function app() {
   const a = new Hono();

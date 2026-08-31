@@ -1,11 +1,11 @@
 import { Hono } from 'hono';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../db.js';
 import { categories, divisions, products } from '@cida/db/schema';
-import { authMiddleware } from '../middleware/auth';
-import { requireMinRole } from '../middleware/rbac';
-import { writeAuditLog } from '../middleware/audit';
-import { AppError, mustRow } from '../errors';
+import { authMiddleware } from '../middleware/auth.js';
+import { requireMinRole } from '../middleware/rbac.js';
+import { writeAuditLog } from '../middleware/audit.js';
+import { AppError, mustRow } from '../errors.js';
 import {
   categoryUpsertSchema,
   divisionUpsertSchema,

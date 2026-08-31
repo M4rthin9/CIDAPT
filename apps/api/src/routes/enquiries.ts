@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { db } from '../db';
+import { db } from '../db.js';
 import { productEnquiries } from '@cida/db/schema';
-import { AppError } from '../errors';
+import { AppError } from '../errors.js';
 
 const enquiries = new Hono();
 
@@ -59,7 +59,7 @@ enquiries.post('/', async (c) => {
   }
 
   // Notification hook — delivery in P7 (LINE + SMTP)
-  const { getLogger } = await import('../logger');
+  const { getLogger } = await import('../logger.js');
   const log = getLogger();
   log.info({ enquiryId: enquiry.id, productId: data.productId }, 'New product enquiry');
 

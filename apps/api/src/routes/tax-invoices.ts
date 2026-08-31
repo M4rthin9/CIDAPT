@@ -1,14 +1,16 @@
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../db.js';
 import { taxInvoices, orders, orderItems } from '@cida/db/schema';
-import { authMiddleware } from '../middleware/auth';
-import { requireMinRole } from '../middleware/rbac';
-import { writeAuditLog } from '../middleware/audit';
-import { AppError } from '../errors';
+import { authMiddleware } from '../middleware/auth.js';
+import { requireMinRole } from '../middleware/rbac.js';
+import { writeAuditLog } from '../middleware/audit.js';
+import { AppError } from '../errors.js';
 import { taxInvoiceIssueSchema } from '@cida/contracts';
-import { nextDocumentNo } from '../lib/doc-counter';
-import { htmlToPdf } from '../lib/pdf';
+import { nextDocumentNo } from '../lib/doc-counter.js';
+import { htmlToPdf } from '../lib/pdf.js';
+import { getEnv } from '../config.js';
+import { S3Storage } from '@cida/storage';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -116,10 +118,21 @@ taxInvoicesRoutes.post('/', async (c) => {
     .replace('{{vat}}', formatMoney(vatSatang))
     .replace('{{total}}', formatMoney(totalSatang));
 
-  await htmlToPdf(template, `${invoiceNo}.pdf`);
+  // Render first, then persist. If either step throws, the transaction that
+  // consumed the counter row rolls back with it, so numbering stays gapless and
+  // no invoice row is ever written pointing at an object that does not exist.
+  const pdf = await htmlToPdf(template, `${invoiceNo}.pdf`);
 
-  // Store PDF key (simplified — full storage integration in P8)
   const pdfKey = `invoices/${invoiceNo}.pdf`;
+  const env = getEnv();
+  const storage = new S3Storage({
+    endpoint: env.S3_ENDPOINT,
+    bucket: env.S3_BUCKET,
+    accessKey: env.S3_ACCESS_KEY,
+    secretKey: env.S3_SECRET_KEY,
+    region: env.S3_REGION,
+  });
+  await storage.put(pdfKey, pdf, 'application/pdf');
 
   const [invoice] = await db.instance
     .insert(taxInvoices)

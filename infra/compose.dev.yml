@@ -62,7 +62,7 @@ services:
     volumes:
       - mailpit_data:/data
     ports:
-      - '127.0.0.1:8025:8025'
+      - '127.0.0.1:9025:8025'
       - '127.0.0.1:1025:1025'
     healthcheck:
       interval: 10s
@@ -103,7 +103,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - '127.0.0.1:8081:8081'
+      - '127.0.0.1:9081:8081'
     healthcheck:
       interval: 10s
       timeout: 3s

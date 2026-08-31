@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
-import { db } from '../db';
+import { db } from '../db.js';
 import { adminUsers } from '@cida/db/schema';
 import {
   authMiddleware,
@@ -11,9 +11,9 @@ import {
   setSessionCookie,
   clearSessionCookie,
   destroySession,
-} from '../middleware/auth';
-import { writeAuditLog } from '../middleware/audit';
-import { AppError } from '../errors';
+} from '../middleware/auth.js';
+import { writeAuditLog } from '../middleware/audit.js';
+import { AppError } from '../errors.js';
 
 const authRoutes = new Hono();
 
