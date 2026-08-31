@@ -184,6 +184,7 @@ export async function setupBootstrapSuperadmin(db: ReturnType<typeof drizzle>): 
       updatedAt: now,
     })
     .returning({ id: adminUsers.id });
+  if (!row) throw new Error('bootstrap superadmin insert returned no row');
   await db.insert(auditLog).values({
     action: 'bootstrap.superadmin_create',
     severity: 'normal',
